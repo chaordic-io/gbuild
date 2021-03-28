@@ -19,6 +19,57 @@ You can have multiple `execution plans`, for instance one for `CI`, one for `mai
 
 In the future, we intend to add target caching, so as to avoid rebuilding targets unecessarily, if they are unchanged.
 
+## Example
+
+
+```
+targets:
+- name: Frontend
+  max_retries: 2
+  path: front-end/
+  run:
+    |-
+    yarn test
+    yarn build
+- name: Backend
+  run:
+    |-
+    sbt test assembly
+- name: PackageFE
+  path: front-end/
+  depends_on:
+    - Frontend
+  run: 
+    |-
+    docker build . -t my_image:latest
+    docker push my_image:latest
+- name: PackageBE
+  depends_on:
+    - Frontend
+  run: 
+    |-
+    docker build . -t my_backend:latest
+    docker push my_backend:latest
+- name: Deploy
+  depends_on:
+    - Frontend
+  run: 
+    |-
+    terraform apply
+execution_plans:
+  - name: CI
+    targets:
+    - Frontend
+    - Backend
+    - PackageFE
+    - PackageBE
+    - Deploy
+  - name: Local
+    targets:
+    - Frontend
+    - Backend
+```
+
 ## TODO
 
 * Isolated execution
