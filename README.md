@@ -15,7 +15,7 @@ _Graph Build_ is a _meta-build tool_, it is intended to work with your existing 
 What the tool does, is allow you to configure your multi-language, multi-module build as a directed graph of `targets`. Each `target` can depend on one or more other `targets`.
 These targets are then bundled into an `execution plan`, which is the set of targets you want to build for a given purpose. `GraphBuild` will look at the `targets` in the `execution plan`, analyse their dependencies and then execute as much as possible in parallel for speed and efficiency, while honouring the dependency order of the targets that it has derived.
 
-You can have multiple `execution plans`, for instance one for `CI`, one for `main releases`, one for `local development` etc.
+You can have multiple `execution plans`, for instance one for `CI`, one for `main releases`, one for `local development` etc. The intent is to allow local development to be as much a first class citizen as CI pipelines.
 
 In the future, we intend to add target caching, so as to avoid rebuilding targets unecessarily, if they are unchanged.
 
