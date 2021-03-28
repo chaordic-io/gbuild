@@ -53,7 +53,8 @@ targets:
     docker push my_backend:latest
 - name: Deploy
   depends_on:
-    - Frontend
+    - PackageFE
+    - PackageBE
   run: 
     |-
     terraform apply
