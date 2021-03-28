@@ -20,17 +20,17 @@ type TargetResult struct {
 	Elapsed time.Duration
 }
 
-func runTarget(task config.Target, wg *sync.WaitGroup, reads chan readOp, writes chan TargetResult) {
+func scheduleTarget(target config.Target, wg *sync.WaitGroup, reads chan readOp, writes chan TargetResult) {
 	start := time.Now()
 	var waitTime time.Duration
 
 	defer func() {
 		if err := recover(); err != nil {
 			elapsed := time.Now().Sub(start)
-			writes <- TargetResult{&err, task, &waitTime, elapsed}
+			writes <- TargetResult{&err, target, &waitTime, elapsed}
 		}
 	}()
-	if task.DependsOn != nil && len(*task.DependsOn) > 0 {
+	if target.DependsOn != nil && len(*target.DependsOn) > 0 {
 		completed := false
 
 		for !completed {
@@ -40,7 +40,7 @@ func runTarget(task config.Target, wg *sync.WaitGroup, reads chan readOp, writes
 			reads <- read
 			resp := <-read.resp
 			for _, t := range resp {
-				for _, d := range *task.DependsOn {
+				for _, d := range *target.DependsOn {
 					if d == t.Target.Name {
 						completed = true
 					}
@@ -50,19 +50,19 @@ func runTarget(task config.Target, wg *sync.WaitGroup, reads chan readOp, writes
 		time.Sleep(5 * time.Millisecond)
 	}
 	waitTime = time.Now().Sub(start)
-	fmt.Println(task.Run)
+	//fmt.Println(target.Run)
 	elapsed := time.Now().Sub(start)
-	writes <- TargetResult{nil, task, &waitTime, elapsed}
+	writes <- TargetResult{nil, target, &waitTime, elapsed}
 
 	wg.Done()
 }
 
-func RunPlan(tasks []config.Target) ([]TargetResult, error) {
+func RunPlan(targets []config.Target) ([]TargetResult, error) {
 	reads := make(chan readOp)
 	writes := make(chan TargetResult)
 	var waitGroup sync.WaitGroup
 	// Set number of effective goroutines we want to wait upon
-	waitGroup.Add(len(tasks))
+	waitGroup.Add(len(targets))
 
 	go func() {
 		var state = []TargetResult{}
@@ -82,8 +82,8 @@ func RunPlan(tasks []config.Target) ([]TargetResult, error) {
 		}
 	}()
 
-	for _, task := range tasks {
-		go runTarget(task, &waitGroup, reads, writes)
+	for _, target := range targets {
+		go scheduleTarget(target, &waitGroup, reads, writes)
 	}
 	waitGroup.Wait()
 	read := readOp{
