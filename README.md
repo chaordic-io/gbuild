@@ -1,4 +1,5 @@
-# Graph Build
+# gbuild
+`gbuild` stands for `graph build`, more about that and why below.
 ## Problem definition
 Many software projects today contain multiple languages, modules and deployment targets.
 This can cause a few problems for teams, such as:
@@ -10,7 +11,7 @@ This can cause a few problems for teams, such as:
 A potential solution to this is adopting a tool like [Bazel](https://bazel.build), which is an excellent solution for monorepos and multi-language builds. But unfortunately, this leads to another set of problems, like a high-learning curve, having to throw away existing build-tools and potentially sacrifice IDE integration with these tools.
 
 ## The Solution/who this is for
-_Graph Build_ is a _meta-build tool_, it is intended to work with your existing language specific build tools, such as `yarn`, `npm`, `sbt`, `gradle` or any others. It is intended as an overlay over these tools for efficient CI builds and local workflows.
+_gbuild_ is a _meta-build tool_, it is intended to work with your existing language specific build tools, such as `yarn`, `npm`, `sbt`, `gradle` or any others. It is intended as an overlay over these tools for efficient CI builds and local workflows.
 
 What the tool does, is allow you to configure your multi-language, multi-module build as a directed graph of `targets`. Each `target` can depend on one or more other `targets`.
 These targets are then bundled into an `execution plan`, which is the set of targets you want to build for a given purpose. `GraphBuild` will look at the `targets` in the `execution plan`, analyse their dependencies and then execute as much as possible in parallel for speed and efficiency, while honouring the dependency order of the targets that it has derived.

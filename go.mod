@@ -1,4 +1,4 @@
-module github.com/graph-build
+module github.com/chaordic-io/gbuild
 
 go 1.16
 

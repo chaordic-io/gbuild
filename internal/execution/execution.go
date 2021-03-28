@@ -5,7 +5,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/graph-build/internal/config"
+	"github.com/chaordic-io/gbuild/internal/config"
 )
 
 func RunTask(task config.Task, wg *sync.WaitGroup) {
