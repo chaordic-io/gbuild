@@ -39,8 +39,8 @@ func TestLoadConfig(t *testing.T) {
 func TestTargetDefinedTwiceValidation(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", nil},
-			{"foo", nil, nil, "bar", nil},
+			{"foo", nil, nil, "bar", nil, nil, nil},
+			{"foo", nil, nil, "bar", nil, nil, nil},
 		},
 		[]ExecutionPlan{},
 	}
@@ -54,7 +54,7 @@ func TestTargetDefinedTwiceValidation(t *testing.T) {
 func TestTargetSelfDependentValidations(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", &[]string{"foo"}, nil, nil},
 		},
 		[]ExecutionPlan{},
 	}
@@ -68,7 +68,7 @@ func TestTargetSelfDependentValidations(t *testing.T) {
 func TestTargetNotDefined(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", &[]string{"foo"}, nil, nil},
 		},
 		[]ExecutionPlan{{"foo", []string{"bar"}}, {"bar", []string{}}},
 	}
@@ -82,7 +82,7 @@ func TestTargetNotDefined(t *testing.T) {
 func TestDuplicatePlanName(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", &[]string{"foo"}, nil, nil},
 		},
 		[]ExecutionPlan{{"foo", []string{}}, {"foo", []string{}}},
 	}
@@ -96,7 +96,7 @@ func TestDuplicatePlanName(t *testing.T) {
 func TestDuplicateTargetInPlan(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", &[]string{"foo"}, nil, nil},
 		},
 		[]ExecutionPlan{{"foo", []string{"foo", "foo"}}},
 	}
@@ -110,7 +110,7 @@ func TestDuplicateTargetInPlan(t *testing.T) {
 func TestGetTargetsForPlan(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", &[]string{"foo"}, nil, nil},
 		},
 		[]ExecutionPlan{{"foo", []string{"foo"}}},
 	}
@@ -124,7 +124,7 @@ func TestGetTargetsForPlan(t *testing.T) {
 func TestGetTargetsForPlanFailure(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", &[]string{"foo"}, nil, nil},
 		},
 		[]ExecutionPlan{{"foo", []string{"foo"}}},
 	}
@@ -138,7 +138,7 @@ func TestGetTargetsForPlanFailure(t *testing.T) {
 func TestGetTargetsForPlanFailure2(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", &[]string{"foo"}, nil, nil},
 		},
 		[]ExecutionPlan{{"foo", []string{}}},
 	}
