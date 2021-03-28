@@ -1,0 +1,28 @@
+tasks:
+- name: Foo
+  max_retries: 2
+  path: sandbox/
+  run:
+    |-
+    export BUILD_PATH=$(pwd)
+    echo $BUILDPATH
+- name: Bar
+  run:
+    |-
+    export BPATH=$(pwd)
+    echo "hello world"
+- name: Baz
+  depends_on:
+    - Bar
+    - Foo
+  run: echo "buh bye"
+execution_plans:
+  - name: CI
+    tasks:
+    - Foo
+    - Bar
+    - Baz
+  - name: Local
+    tasks:
+    - Foo
+    - Bar
