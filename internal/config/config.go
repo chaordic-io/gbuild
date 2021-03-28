@@ -13,6 +13,8 @@ type Target struct {
 	Path       *string   `yaml:"path"`
 	Run        string    `yaml:"run"`
 	DependsOn  *[]string `yaml:"depends_on"`
+	Outputs    *[]string `yaml:"outputs"`       // things like assembly.jar to be populated back from a cache
+	Cache      *[]string `yaml:"cache_targets"` // general things to cache, like target/ dist/
 }
 
 type ExecutionPlan struct {
