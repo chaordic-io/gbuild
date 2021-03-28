@@ -1,4 +1,4 @@
-tasks:
+targets:
 - name: Foo
   max_retries: 2
   path: sandbox/
@@ -18,11 +18,11 @@ tasks:
   run: echo "buh bye"
 execution_plans:
   - name: CI
-    tasks:
+    targets:
     - Foo
     - Bar
     - Baz
   - name: Local
-    tasks:
+    targets:
     - Foo
     - Bar

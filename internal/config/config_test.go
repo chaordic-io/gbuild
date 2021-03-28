@@ -8,37 +8,37 @@ func TestLoadConfig(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if len(c.Tasks) != 3 {
-		t.Fatalf("Expected 3 tasks, got %v", c.Tasks)
+	if len(c.Targets) != 3 {
+		t.Fatalf("Expected 3 targets, got %v", c.Targets)
 	}
 
-	if len(*c.Tasks[2].DependsOn) != 2 {
-		t.Fatalf("Expected 2 dependencies, got %v", c.Tasks)
+	if len(*c.Targets[2].DependsOn) != 2 {
+		t.Fatalf("Expected 2 dependencies, got %v", c.Targets)
 	}
 
-	if c.Tasks[0].MaxRetries == nil {
-		t.Fatalf("Expected Max Retries to be set, got %v", c.Tasks[0].MaxRetries)
+	if c.Targets[0].MaxRetries == nil {
+		t.Fatalf("Expected Max Retries to be set, got %v", c.Targets[0].MaxRetries)
 	}
-	if c.Tasks[0].Path == nil {
-		t.Fatalf("Expected Max Retries to be set, got %v", c.Tasks[0].MaxRetries)
+	if c.Targets[0].Path == nil {
+		t.Fatalf("Expected Max Retries to be set, got %v", c.Targets[0].MaxRetries)
 	}
 
 	if len(c.ExecutionPlans) != 2 {
-		t.Fatalf("Expected 2 tasks, got %v", c.ExecutionPlans)
+		t.Fatalf("Expected 2 targets, got %v", c.ExecutionPlans)
 	}
 
-	if len(c.ExecutionPlans[0].Tasks) != 3 {
-		t.Fatalf("Expected 3 tasks, got %v", c.ExecutionPlans)
+	if len(c.ExecutionPlans[0].Targets) != 3 {
+		t.Fatalf("Expected 3 targets, got %v", c.ExecutionPlans)
 	}
 
-	if len(c.ExecutionPlans[1].Tasks) != 2 {
-		t.Fatalf("Expected 3 tasks, got %v", c.ExecutionPlans)
+	if len(c.ExecutionPlans[1].Targets) != 2 {
+		t.Fatalf("Expected 3 targets, got %v", c.ExecutionPlans)
 	}
 }
 
-func TestTaskDefinedTwiceValidation(t *testing.T) {
+func TestTargetDefinedTwiceValidation(t *testing.T) {
 	c := &Config{
-		[]Task{
+		[]Target{
 			{"foo", nil, nil, "bar", nil},
 			{"foo", nil, nil, "bar", nil},
 		},
@@ -51,9 +51,9 @@ func TestTaskDefinedTwiceValidation(t *testing.T) {
 	}
 }
 
-func TestTaskSelfDependentValidations(t *testing.T) {
+func TestTargetSelfDependentValidations(t *testing.T) {
 	c := &Config{
-		[]Task{
+		[]Target{
 			{"foo", nil, nil, "bar", &[]string{"foo"}},
 		},
 		[]ExecutionPlan{},
@@ -65,9 +65,9 @@ func TestTaskSelfDependentValidations(t *testing.T) {
 	}
 }
 
-func TestTaskNotDefined(t *testing.T) {
+func TestTargetNotDefined(t *testing.T) {
 	c := &Config{
-		[]Task{
+		[]Target{
 			{"foo", nil, nil, "bar", &[]string{"foo"}},
 		},
 		[]ExecutionPlan{{"foo", []string{"bar"}}, {"bar", []string{}}},
@@ -81,7 +81,7 @@ func TestTaskNotDefined(t *testing.T) {
 
 func TestDuplicatePlanName(t *testing.T) {
 	c := &Config{
-		[]Task{
+		[]Target{
 			{"foo", nil, nil, "bar", &[]string{"foo"}},
 		},
 		[]ExecutionPlan{{"foo", []string{}}, {"foo", []string{}}},
@@ -93,9 +93,9 @@ func TestDuplicatePlanName(t *testing.T) {
 	}
 }
 
-func TestDuplicateTaskInPlan(t *testing.T) {
+func TestDuplicateTargetInPlan(t *testing.T) {
 	c := &Config{
-		[]Task{
+		[]Target{
 			{"foo", nil, nil, "bar", &[]string{"foo"}},
 		},
 		[]ExecutionPlan{{"foo", []string{"foo", "foo"}}},
@@ -107,44 +107,44 @@ func TestDuplicateTaskInPlan(t *testing.T) {
 	}
 }
 
-func TestGetTasksForPlan(t *testing.T) {
+func TestGetTargetsForPlan(t *testing.T) {
 	c := &Config{
-		[]Task{
+		[]Target{
 			{"foo", nil, nil, "bar", &[]string{"foo"}},
 		},
 		[]ExecutionPlan{{"foo", []string{"foo"}}},
 	}
 
-	tasks, err := GetTasksForPlan(c, "foo")
-	if err != nil || len(tasks) != 1 {
-		t.Fatal("Did not expect an error here, expected 1 task")
+	targets, err := GetTargetsForPlan(c, "foo")
+	if err != nil || len(targets) != 1 {
+		t.Fatal("Did not expect an error here, expected 1 target")
 	}
 }
 
-func TestGetTasksForPlanFailure(t *testing.T) {
+func TestGetTargetsForPlanFailure(t *testing.T) {
 	c := &Config{
-		[]Task{
+		[]Target{
 			{"foo", nil, nil, "bar", &[]string{"foo"}},
 		},
 		[]ExecutionPlan{{"foo", []string{"foo"}}},
 	}
 
-	_, err := GetTasksForPlan(c, "bar")
+	_, err := GetTargetsForPlan(c, "bar")
 	if err == nil {
-		t.Fatal("Did not expect an error here, expected 1 task")
+		t.Fatal("Did not expect an error here, expected 1 target")
 	}
 }
 
-func TestGetTasksForPlanFailure2(t *testing.T) {
+func TestGetTargetsForPlanFailure2(t *testing.T) {
 	c := &Config{
-		[]Task{
+		[]Target{
 			{"foo", nil, nil, "bar", &[]string{"foo"}},
 		},
 		[]ExecutionPlan{{"foo", []string{}}},
 	}
 
-	_, err := GetTasksForPlan(c, "foo")
+	_, err := GetTargetsForPlan(c, "foo")
 	if err == nil {
-		t.Fatal("Did not expect an error here, expected 1 task")
+		t.Fatal("Did not expect an error here, expected 1 target")
 	}
 }

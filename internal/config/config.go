@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Task struct {
+type Target struct {
 	Name       string    `yaml:"name"`
 	MaxRetries *int      `yaml:"max_retries"`
 	Path       *string   `yaml:"path"`
@@ -16,12 +16,12 @@ type Task struct {
 }
 
 type ExecutionPlan struct {
-	Name  string   `yaml:"name"`
-	Tasks []string `yaml:"tasks"`
+	Name    string   `yaml:"name"`
+	Targets []string `yaml:"targets"`
 }
 
 type Config struct {
-	Tasks          []Task          `yaml:"tasks"`
+	Targets        []Target        `yaml:"targets"`
 	ExecutionPlans []ExecutionPlan `yaml:"execution_plans"`
 }
 
@@ -44,38 +44,38 @@ func LoadConfig(filename string) (*Config, error) {
 	return c, nil
 }
 
-func GetTasksForPlan(config *Config, planName string) ([]Task, error) {
-	var tasks []Task
+func GetTargetsForPlan(config *Config, planName string) ([]Target, error) {
+	var targets []Target
 	cfg := *config
 
 	for _, pl := range cfg.ExecutionPlans {
 		if pl.Name == planName {
-			for _, taskName := range pl.Tasks {
-				for _, task := range cfg.Tasks {
-					if task.Name == taskName {
-						tasks = append(tasks, task)
+			for _, targetName := range pl.Targets {
+				for _, target := range cfg.Targets {
+					if target.Name == targetName {
+						targets = append(targets, target)
 					}
 				}
 			}
 		}
 	}
-	if len(tasks) == 0 {
-		return nil, fmt.Errorf("no tasks found for plan %v, does the plan exist?", planName)
+	if len(targets) == 0 {
+		return nil, fmt.Errorf("no targets found for plan %v, does the plan exist?", planName)
 	}
 
-	return tasks, nil
+	return targets, nil
 }
 
 func validate(c *Config) error {
 	conf := *c
-	var taskNames []string
-	for _, task := range conf.Tasks {
-		if containsString(task.Name, taskNames) {
-			return fmt.Errorf("a task with name %v is defined twice, names must be unique", task.Name)
+	var targetNames []string
+	for _, target := range conf.Targets {
+		if containsString(target.Name, targetNames) {
+			return fmt.Errorf("a target with name %v is defined twice, names must be unique", target.Name)
 		}
-		taskNames = append(taskNames, task.Name)
-		if task.DependsOn != nil && containsString(task.Name, *task.DependsOn) {
-			return fmt.Errorf("the %v depends on itself, this is not permissible", task.Name)
+		targetNames = append(targetNames, target.Name)
+		if target.DependsOn != nil && containsString(target.Name, *target.DependsOn) {
+			return fmt.Errorf("the %v depends on itself, this is not permissible", target.Name)
 		}
 	}
 
@@ -84,16 +84,16 @@ func validate(c *Config) error {
 		if containsString(plan.Name, planNames) {
 			return fmt.Errorf("an execution plan with name %v is defined twice, names must be unique", plan.Name)
 		}
-		var planTasks []string
+		var planTargets []string
 		planNames = append(planNames, plan.Name)
-		for _, task := range plan.Tasks {
-			if !containsString(task, taskNames) {
-				return fmt.Errorf("the task %v in the execution plan %v is not defined among the tasks", task, plan.Name)
+		for _, target := range plan.Targets {
+			if !containsString(target, targetNames) {
+				return fmt.Errorf("the target %v in the execution plan %v is not defined among the targets", target, plan.Name)
 			}
-			if containsString(task, planTasks) {
-				return fmt.Errorf("the task %v in the execution plan %v is defined twice, a task may only be run once per plan", task, plan.Name)
+			if containsString(target, planTargets) {
+				return fmt.Errorf("the target %v in the execution plan %v is defined twice, a target may only be run once per plan", target, plan.Name)
 			}
-			planNames = append(planTasks, task)
+			planNames = append(planTargets, target)
 		}
 	}
 
