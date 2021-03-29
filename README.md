@@ -7,6 +7,7 @@ This can cause a few problems for teams, such as:
 * Naive CI builds that build serially, instead of building the most efficient way in parallel.
 * Hodge-podge home-built builds, where glue code is built into the build-tools of one language, to call build tools for other languages.
 * Needing to "rebuild the world" on each build, because there is no concept of discovery of which module actually changed (for instance, rebuilding a frontend, when only backend code has changed).
+* Local and CI builds duplicate the same functionality
 
 A potential solution to this is adopting a tool like [Bazel](https://bazel.build), which is an excellent solution for monorepos and multi-language builds. But unfortunately, this leads to another set of problems, like a high-learning curve, having to throw away existing build-tools and potentially sacrifice IDE integration with these tools.
 
