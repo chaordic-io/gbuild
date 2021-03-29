@@ -24,7 +24,8 @@ In the future, we intend to add target caching, so as to avoid rebuilding target
 ## Usage & Configuration Example
 
   gbuild -t [target execution plan] -f [yaml configuration file]
-  _defaults -t to "build" and -f to ".gbuild.yml" if not defined_
+  
+ The above _defaults -t to "build" and -f to ".gbuild.yml" if not defined_
 
 Configuration options should be mostly self-explanatory in the example below.
 It is important to note, that while the `run` block inherits the shell-environment in which `gbuild` is invoked, the shells themselves run in isolation from each other and can only share files. Any environment variables set in a target will not be available to other targets, or the parent shell.
