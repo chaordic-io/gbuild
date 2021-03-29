@@ -15,7 +15,7 @@ A potential solution to this is adopting a tool like [Bazel](https://bazel.build
 _gbuild_ is a _meta-build tool_, it is intended to work with your existing language specific build tools, such as `yarn`, `npm`, `sbt`, `gradle` or any others. It is intended as an overlay over these tools for efficient CI builds and local workflows.
 
 What the tool does, is allow you to configure your multi-language, multi-module build as a directed graph of `targets`. Each `target` can depend on one or more other `targets`.
-These targets are then bundled into an `execution plan`, which is the set of targets you want to build for a given purpose. `gbuildd` will look at the `targets` in the `execution plan`, analyse their dependencies and then execute as much as possible in parallel for speed and efficiency, while honouring the dependency order of the targets that it has derived.
+These targets are then bundled into an `execution plan`, which is the set of targets you want to build for a given purpose. `gbuild` will look at the `targets` in the `execution plan`, analyse their dependencies and then execute as much as possible in parallel for speed and efficiency, while honouring the dependency order of the targets that it has derived.
 
 You can have multiple `execution plans`, for instance one for `ci`, one for `main`-releases, one for `local`-development etc. The intent is to allow local development to be as much a first class citizen as CI pipelines.
 
