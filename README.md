@@ -1,5 +1,5 @@
 # gbuild
-`gbuild` stands for `graph build`, more about that and why below.
+`gbuild` stands for `graph build`. It is a build-tool for multi language, module & deployment-target projects, that allows you to find the most effective way to build in parallel using existing language-specific tools, while honouring the implicit dependency graph betweeen modules.
 ## Problem definition
 Many software projects today contain multiple languages, modules and deployment targets.
 This can cause a few problems for teams, such as:
