@@ -14,20 +14,25 @@ A potential solution to this is adopting a tool like [Bazel](https://bazel.build
 _gbuild_ is a _meta-build tool_, it is intended to work with your existing language specific build tools, such as `yarn`, `npm`, `sbt`, `gradle` or any others. It is intended as an overlay over these tools for efficient CI builds and local workflows.
 
 What the tool does, is allow you to configure your multi-language, multi-module build as a directed graph of `targets`. Each `target` can depend on one or more other `targets`.
-These targets are then bundled into an `execution plan`, which is the set of targets you want to build for a given purpose. `GraphBuild` will look at the `targets` in the `execution plan`, analyse their dependencies and then execute as much as possible in parallel for speed and efficiency, while honouring the dependency order of the targets that it has derived.
+These targets are then bundled into an `execution plan`, which is the set of targets you want to build for a given purpose. `gbuildd` will look at the `targets` in the `execution plan`, analyse their dependencies and then execute as much as possible in parallel for speed and efficiency, while honouring the dependency order of the targets that it has derived.
 
-You can have multiple `execution plans`, for instance one for `CI`, one for `main releases`, one for `local development` etc. The intent is to allow local development to be as much a first class citizen as CI pipelines.
+You can have multiple `execution plans`, for instance one for `ci`, one for `main`-releases, one for `local`-development etc. The intent is to allow local development to be as much a first class citizen as CI pipelines.
 
 In the future, we intend to add target caching, so as to avoid rebuilding targets unecessarily, if they are unchanged.
 
-## Example
+## Usage & Configuration Example
 
+  gbuild -t [target execution plan] -f [yaml configuration file]
+  _defaults -t to "build" and -f to ".gbuild.yml" if not defined_
+
+Configuration options should be mostly self-explanatory in the example below.
+It is important to note, that while the `run` block inherits the shell-environment in which `gbuild` is invoked, the shells themselves run in isolation from each other and can only share files. Any environment variables set in a target will not be available to other targets, or the parent shell.
 
 ```
 targets:
 - name: Frontend
   max_retries: 2
-  path: front-end/
+  work_dir: front-end/
   run:
     |-
     yarn test
@@ -37,7 +42,7 @@ targets:
     |-
     sbt test assembly
 - name: PackageFE
-  path: front-end/
+  work_dir: front-end/
   depends_on:
     - Frontend
   run: 
@@ -73,8 +78,7 @@ execution_plans:
 ```
 
 ### TODO
-
-* Isolated execution
 * Caching of outputs and avoid re-running unchanged targets
 * Honour/piggyback on .gitignore for files to ignore (use this? https://github.com/sabhiram/go-gitignore)
-*
+* Plugins for cache-storage (local/remote)
+* Plugins for language specific cache-management

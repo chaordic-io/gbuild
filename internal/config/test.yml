@@ -1,7 +1,7 @@
 targets:
 - name: Foo
   max_retries: 2
-  path: sandbox/
+  work_dir: sandbox/
   run:
     |-
     export BUILD_PATH=$(pwd)

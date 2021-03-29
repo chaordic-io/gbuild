@@ -3,6 +3,7 @@ package execution
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -14,22 +15,15 @@ type readOp struct {
 }
 
 type TargetResult struct {
-	Err     *interface{}
+	Err     *error
 	Target  config.Target
 	Wait    *time.Duration
 	Elapsed time.Duration
 }
 
-func scheduleTarget(target config.Target, wg *sync.WaitGroup, reads chan readOp, writes chan TargetResult) {
+func scheduleTarget(target config.Target, retry int, wg *sync.WaitGroup, reads chan readOp, writes chan TargetResult) {
 	start := time.Now()
-	var waitTime time.Duration
 
-	defer func() {
-		if err := recover(); err != nil {
-			elapsed := time.Now().Sub(start)
-			writes <- TargetResult{&err, target, &waitTime, elapsed}
-		}
-	}()
 	if target.DependsOn != nil && len(*target.DependsOn) > 0 {
 		completed := false
 
@@ -39,22 +33,48 @@ func scheduleTarget(target config.Target, wg *sync.WaitGroup, reads chan readOp,
 			}
 			reads <- read
 			resp := <-read.resp
+			matches := 0
 			for _, t := range resp {
 				for _, d := range *target.DependsOn {
 					if d == t.Target.Name {
-						completed = true
+						matches++
 					}
 				}
 			}
+			completed = matches == len(*target.DependsOn)
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
-	waitTime = time.Now().Sub(start)
-	//fmt.Println(target.Run)
-	elapsed := time.Now().Sub(start)
+	waitTime := time.Since(start)
+	fmt.Printf("Target %v started.. Waited for %v\n", target.Name, waitTime)
+	err := RunTarget(target)
+	if err != nil {
+		if target.MaxRetries != nil && *target.MaxRetries > retry {
+			fmt.Printf("Target %v failed, retrying\n", target.Name)
+			scheduleTarget(target, retry+1, wg, reads, writes)
+		} else {
+			elapsed := time.Since(start)
+			fmt.Printf("Target %v failed after %v\n", target.Name, elapsed)
+			writes <- TargetResult{&err, target, &waitTime, elapsed}
+		}
+	}
+
+	elapsed := time.Since(start)
+	fmt.Printf("Target %v finished successfully after %v\n", target.Name, elapsed)
 	writes <- TargetResult{nil, target, &waitTime, elapsed}
 
 	wg.Done()
+}
+
+func RunTarget(target config.Target) error {
+	cmd := exec.Command("/bin/sh", "-c", target.Run)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if target.WorkDir != nil {
+		cmd.Dir = *target.WorkDir
+	}
+	err := cmd.Run()
+	return err
 }
 
 func RunPlan(targets []config.Target) ([]TargetResult, error) {
@@ -74,8 +94,8 @@ func RunPlan(targets []config.Target) ([]TargetResult, error) {
 				state = append(state, write)
 
 				if write.Err != nil {
-					// TODO report more here
-					fmt.Println(write.Err)
+					e := *write.Err
+					fmt.Println(e.Error())
 					os.Exit(1)
 				}
 			}
@@ -83,7 +103,7 @@ func RunPlan(targets []config.Target) ([]TargetResult, error) {
 	}()
 
 	for _, target := range targets {
-		go scheduleTarget(target, &waitGroup, reads, writes)
+		go scheduleTarget(target, 0, &waitGroup, reads, writes)
 	}
 	waitGroup.Wait()
 	read := readOp{
