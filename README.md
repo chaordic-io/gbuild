@@ -22,9 +22,9 @@ You can have multiple `execution plans`, for instance one for `ci`, one for `mai
 In the future, we intend to add target caching, so as to avoid rebuilding targets unecessarily, if they are unchanged.
 
 ## Usage & Configuration Example
-
+```
   gbuild -t [target execution plan] -f [yaml configuration file]
-  
+``` 
  The above _defaults -t to "build" and -f to ".gbuild.yml" if not defined_
 
 Configuration options should be mostly self-explanatory in the example below.
