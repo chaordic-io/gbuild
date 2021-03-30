@@ -1,5 +1,5 @@
 ![example workflow](https://github.com/chaordic-io/gbuild/actions/workflows/build.yml/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/chaordic-io/gbuild/badge.svg?branch=main)](https://coveralls.io/github/chaordic-io/gbuild?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/chaordic-io/gbuild/badge.svg?branch=gh-actions)](https://coveralls.io/github/chaordic-io/gbuild?branch=gh-actions)
 # gbuild
 `gbuild` stands for `graph build`. Gbuild is a meta build-tool for multi language, module & deployment-target projects, that allows you to find the most effective way to build in parallel using existing language-specific tools, while honouring the implicit dependency graph betweeen modules. Currently parallel execution works, and in the future, we plan to add build caching through a plugin system.
 ## Problem definition
