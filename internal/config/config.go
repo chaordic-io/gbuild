@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/chaordic-io/gbuild/internal/common"
 	"gopkg.in/yaml.v2"
 )
 
@@ -25,7 +26,7 @@ type Config struct {
 	ExecutionPlans []ExecutionPlan `yaml:"execution_plans"`
 }
 
-func LoadConfig(filename string) (*Config, error) {
+func LoadConfig(filename string, log common.Log) (*Config, error) {
 	c := &Config{}
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -36,7 +37,7 @@ func LoadConfig(filename string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("in file %q: %v", filename, err)
 	}
-	err = validate(c)
+	err = validate(c, log)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +45,7 @@ func LoadConfig(filename string) (*Config, error) {
 	return c, nil
 }
 
-func GetTargetsForPlan(config *Config, planName string) ([]Target, error) {
+func GetTargetsForPlan(config *Config, planName string, log common.Log) ([]Target, error) {
 	var targets []Target
 	cfg := *config
 
@@ -66,7 +67,7 @@ func GetTargetsForPlan(config *Config, planName string) ([]Target, error) {
 	return targets, nil
 }
 
-func validate(c *Config) error {
+func validate(c *Config, log common.Log) error {
 	conf := *c
 	var targetNames []string
 	for _, target := range conf.Targets {

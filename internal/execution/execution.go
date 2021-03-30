@@ -1,12 +1,12 @@
 package execution
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"sync"
 	"time"
 
+	"github.com/chaordic-io/gbuild/internal/common"
 	"github.com/chaordic-io/gbuild/internal/config"
 )
 
@@ -21,7 +21,7 @@ type TargetResult struct {
 	Elapsed time.Duration
 }
 
-func scheduleTarget(target config.Target, retry int, wg *sync.WaitGroup, reads chan readOp, writes chan TargetResult) {
+func scheduleTarget(target config.Target, retry int, wg *sync.WaitGroup, reads chan readOp, writes chan TargetResult, log common.Log) {
 	start := time.Now()
 
 	if target.DependsOn != nil && len(*target.DependsOn) > 0 {
@@ -46,27 +46,27 @@ func scheduleTarget(target config.Target, retry int, wg *sync.WaitGroup, reads c
 		time.Sleep(5 * time.Millisecond)
 	}
 	waitTime := time.Since(start)
-	fmt.Printf("Target %v started.. Waited for %v\n", target.Name, waitTime)
-	err := RunTarget(target)
+	log.Printf("Target %v started.. Waited for %v\n", target.Name, waitTime)
+	err := runTarget(target)
+	elapsed := time.Since(start)
 	if err != nil {
 		if target.MaxRetries != nil && *target.MaxRetries > retry {
-			fmt.Printf("Target %v failed, retrying\n", target.Name)
-			scheduleTarget(target, retry+1, wg, reads, writes)
+			log.Printf("Target %v failed, retrying\n", target.Name)
+			scheduleTarget(target, retry+1, wg, reads, writes, log)
 		} else {
-			elapsed := time.Since(start)
-			fmt.Printf("Target %v failed after %v\n", target.Name, elapsed)
+			log.Printf("Target %v failed after %v\n", target.Name, elapsed)
 			writes <- TargetResult{&err, target, &waitTime, elapsed}
 		}
+	} else {
+		log.Printf("Target %v finished successfully after %v\n", target.Name, elapsed)
 	}
 
-	elapsed := time.Since(start)
-	fmt.Printf("Target %v finished successfully after %v\n", target.Name, elapsed)
 	writes <- TargetResult{nil, target, &waitTime, elapsed}
 
 	wg.Done()
 }
 
-func RunTarget(target config.Target) error {
+func runTarget(target config.Target) error {
 	cmd := exec.Command("/bin/sh", "-c", target.Run)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -77,7 +77,7 @@ func RunTarget(target config.Target) error {
 	return err
 }
 
-func RunPlan(targets []config.Target) ([]TargetResult, error) {
+func RunPlan(targets []config.Target, log common.Log) ([]TargetResult, error) {
 	reads := make(chan readOp)
 	writes := make(chan TargetResult)
 	var waitGroup sync.WaitGroup
@@ -95,7 +95,7 @@ func RunPlan(targets []config.Target) ([]TargetResult, error) {
 
 				if write.Err != nil {
 					e := *write.Err
-					fmt.Println(e.Error())
+					log.Println(e.Error())
 					os.Exit(1)
 				}
 			}
@@ -103,7 +103,7 @@ func RunPlan(targets []config.Target) ([]TargetResult, error) {
 	}()
 
 	for _, target := range targets {
-		go scheduleTarget(target, 0, &waitGroup, reads, writes)
+		go scheduleTarget(target, 0, &waitGroup, reads, writes, log)
 	}
 	waitGroup.Wait()
 	read := readOp{
