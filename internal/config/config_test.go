@@ -1,9 +1,15 @@
 package config
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/chaordic-io/gbuild/internal/common"
+)
+
+var log = common.NoLog{}
 
 func TestLoadConfig(t *testing.T) {
-	c, err := LoadConfig("test.yml")
+	c, err := LoadConfig("test.yml", log)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -45,7 +51,7 @@ func TestTargetDefinedTwiceValidation(t *testing.T) {
 		[]ExecutionPlan{},
 	}
 
-	err := validate(c)
+	err := validate(c, log)
 	if err == nil {
 		t.Fatal("Expected an error but got none")
 	}
@@ -59,7 +65,7 @@ func TestTargetSelfDependentValidations(t *testing.T) {
 		[]ExecutionPlan{},
 	}
 
-	err := validate(c)
+	err := validate(c, log)
 	if err == nil {
 		t.Fatal("Expected an error but got none")
 	}
@@ -73,7 +79,7 @@ func TestTargetNotDefined(t *testing.T) {
 		[]ExecutionPlan{{"foo", []string{"bar"}}, {"bar", []string{}}},
 	}
 
-	err := validate(c)
+	err := validate(c, log)
 	if err == nil {
 		t.Fatal("Expected an error but got none")
 	}
@@ -87,7 +93,7 @@ func TestDuplicatePlanName(t *testing.T) {
 		[]ExecutionPlan{{"foo", []string{}}, {"foo", []string{}}},
 	}
 
-	err := validate(c)
+	err := validate(c, log)
 	if err == nil {
 		t.Fatal("Expected an error but got none")
 	}
@@ -101,7 +107,7 @@ func TestDuplicateTargetInPlan(t *testing.T) {
 		[]ExecutionPlan{{"foo", []string{"foo", "foo"}}},
 	}
 
-	err := validate(c)
+	err := validate(c, log)
 	if err == nil {
 		t.Fatal("Expected an error but got none")
 	}
@@ -115,7 +121,7 @@ func TestGetTargetsForPlan(t *testing.T) {
 		[]ExecutionPlan{{"foo", []string{"foo"}}},
 	}
 
-	targets, err := GetTargetsForPlan(c, "foo")
+	targets, err := GetTargetsForPlan(c, "foo", log)
 	if err != nil || len(targets) != 1 {
 		t.Fatal("Did not expect an error here, expected 1 target")
 	}
@@ -129,7 +135,7 @@ func TestGetTargetsForPlanFailure(t *testing.T) {
 		[]ExecutionPlan{{"foo", []string{"foo"}}},
 	}
 
-	_, err := GetTargetsForPlan(c, "bar")
+	_, err := GetTargetsForPlan(c, "bar", log)
 	if err == nil {
 		t.Fatal("Did not expect an error here, expected 1 target")
 	}
@@ -143,7 +149,7 @@ func TestGetTargetsForPlanFailure2(t *testing.T) {
 		[]ExecutionPlan{{"foo", []string{}}},
 	}
 
-	_, err := GetTargetsForPlan(c, "foo")
+	_, err := GetTargetsForPlan(c, "foo", log)
 	if err == nil {
 		t.Fatal("Did not expect an error here, expected 1 target")
 	}
