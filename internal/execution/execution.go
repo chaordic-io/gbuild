@@ -47,33 +47,59 @@ func scheduleTarget(target config.Target, retry int, wg *sync.WaitGroup, reads c
 	}
 	waitTime := time.Since(start)
 	log.Printf("Target %v started.. Waited for %v\n", target.Name, waitTime)
-	err := runTarget(target)
+	err := runTarget(target, reads)
 	elapsed := time.Since(start)
 	if err != nil {
 		if target.MaxRetries != nil && *target.MaxRetries > retry {
 			log.Printf("Target %v failed, retrying\n", target.Name)
 			scheduleTarget(target, retry+1, wg, reads, writes, log)
 		} else {
-			log.Printf("Target %v failed after %v\n", target.Name, elapsed)
+			log.Printf("Target %v failed after %v, reason: \n%v\n\n", target.Name, elapsed, err)
 			writes <- TargetResult{&err, target, &waitTime, elapsed}
 		}
 	} else {
 		log.Printf("Target %v finished successfully after %v\n", target.Name, elapsed)
+		writes <- TargetResult{nil, target, &waitTime, elapsed}
 	}
-
-	writes <- TargetResult{nil, target, &waitTime, elapsed}
 
 	wg.Done()
 }
 
-func runTarget(target config.Target) error {
+func runTarget(target config.Target, reads chan readOp) error {
 	cmd := exec.Command("/bin/sh", "-c", target.Run)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if target.WorkDir != nil {
+		if _, err := os.Stat(*target.WorkDir); os.IsNotExist(err) {
+			return err
+		}
 		cmd.Dir = *target.WorkDir
 	}
-	err := cmd.Run()
+	cmd.Start()
+
+	go func() {
+		cancelled := false
+
+		for !cancelled {
+			read := readOp{
+				resp: make(chan []TargetResult),
+			}
+			reads <- read
+			resp := <-read.resp
+			for _, t := range resp {
+				if t.Target.Name == target.Name {
+					cancelled = true
+					break
+				} else if t.Err != nil {
+					cancelled = true
+					cmd.Process.Kill()
+					break
+				}
+			}
+		}
+	}()
+	err := cmd.Wait()
+
 	return err
 }
 
@@ -92,12 +118,6 @@ func RunPlan(targets []config.Target, log common.Log) ([]TargetResult, error) {
 				read.resp <- state
 			case write := <-writes:
 				state = append(state, write)
-
-				if write.Err != nil {
-					e := *write.Err
-					log.Println(e.Error())
-					os.Exit(1)
-				}
 			}
 		}
 	}()
@@ -111,6 +131,13 @@ func RunPlan(targets []config.Target, log common.Log) ([]TargetResult, error) {
 	}
 	reads <- read
 	resp := <-read.resp
+	var err error
 
-	return resp, nil
+	for _, t := range resp {
+		if t.Err != nil {
+			err = *t.Err
+		}
+	}
+
+	return resp, err
 }

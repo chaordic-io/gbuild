@@ -42,6 +42,14 @@ func TestLoadConfig(t *testing.T) {
 	}
 }
 
+func TestLoadConfigNoFile(t *testing.T) {
+	_, err := LoadConfig("Not-there.yml", log)
+	if err == nil {
+		t.Fatalf("Expected error, got %v", err)
+	}
+
+}
+
 func TestTargetDefinedTwiceValidation(t *testing.T) {
 	c := &Config{
 		[]Target{

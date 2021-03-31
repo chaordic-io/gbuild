@@ -35,7 +35,7 @@ func main() {
 	}
 	_, err = execution.RunPlan(targets, log)
 	if err != nil {
-		log.Printf("Could execute plan, reason: %v exiting\n\n", err.Error())
+		log.Printf("Error executing plan, reason: %v\n\n", err.Error())
 		os.Exit(1)
 	}
 	elapsed := time.Since(start)
