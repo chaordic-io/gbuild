@@ -32,7 +32,7 @@ func TestFailedExecutionWithCancelOfOthers(t *testing.T) {
 
 	targets := []config.Target{
 		{"fast", nil, nil, "asdfasdf", nil},
-		{"slow", nil, nil, "sleep 30", nil},
+		{"slow", nil, nil, "sleep 5", nil},
 	}
 
 	res, err := RunPlan(targets, log)
