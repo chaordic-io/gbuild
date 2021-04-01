@@ -56,6 +56,13 @@ func TestLoadInvalidFile(t *testing.T) {
 	}
 }
 
+func TestLoadFileThatFailsValidation(t *testing.T) {
+	_, err := LoadConfig("invalid2.yaml", log)
+	if err == nil {
+		t.Fatalf("Expected error, got %v", err)
+	}
+}
+
 func TestTargetDefinedTwiceValidation(t *testing.T) {
 	c := &Config{
 		[]Target{

@@ -93,3 +93,27 @@ func TestDependentExecution(t *testing.T) {
 
 	}
 }
+
+func TestNonExistentExecutionDir(t *testing.T) {
+	targets := []config.Target{
+		{"foo", nil, common.String("foobar"), "cd .", nil},
+	}
+
+	_, err := RunPlan(targets, log)
+
+	if err == nil {
+		t.Fatalf("Did not expect lack of error")
+	}
+}
+
+func TestExistingDir(t *testing.T) {
+	targets := []config.Target{
+		{"foo", nil, common.String("../execution"), "cd .", nil},
+	}
+
+	_, err := RunPlan(targets, log)
+
+	if err != nil {
+		t.Fatalf("Did not expect error %v", err)
+	}
+}

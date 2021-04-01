@@ -1,0 +1,28 @@
+targets:
+- name: Foo
+  max_retries: 2
+  work_dir: sandbox/
+  run:
+    |-
+    export BUILD_PATH=$(pwd)
+    echo $BUILDPATH
+- name: Bar
+  run:
+    |-
+    export BPATH=$(pwd)
+    echo "hello world"
+- name: Baz
+  depends_on:
+    - Bar
+    - Foo
+  run: echo "buh bye"
+execution_plans:
+  - name: CI
+    targets:
+    - Foo
+    - Bar
+    - Baz
+  - name: Local
+    targets:
+    - Foo
+    - Foo
