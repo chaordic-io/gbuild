@@ -97,6 +97,7 @@ func runTarget(target config.Target, reads chan readOp) error {
 					break
 				}
 			}
+			time.Sleep(5 * time.Millisecond)
 		}
 	}()
 	return cmd.Wait()
@@ -122,7 +123,7 @@ func RunPlan(targets []config.Target, log common.Log) ([]TargetResult, error) {
 	}()
 
 	for _, target := range targets {
-		go scheduleTarget(target, 0, &waitGroup, reads, writes, log)
+		go scheduleTarget(target, 1, &waitGroup, reads, writes, log)
 	}
 	waitGroup.Wait()
 	read := readOp{
