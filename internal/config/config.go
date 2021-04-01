@@ -88,13 +88,14 @@ func validate(c *Config, log common.Log) error {
 		var planTargets []string
 		planNames = append(planNames, plan.Name)
 		for _, target := range plan.Targets {
+			fmt.Println(target)
 			if !containsString(target, targetNames) {
 				return fmt.Errorf("the target %v in the execution plan %v is not defined among the targets", target, plan.Name)
 			}
 			if containsString(target, planTargets) {
 				return fmt.Errorf("the target %v in the execution plan %v is defined twice, a target may only be run once per plan", target, plan.Name)
 			}
-			planNames = append(planTargets, target)
+			planTargets = append(planTargets, target)
 		}
 	}
 

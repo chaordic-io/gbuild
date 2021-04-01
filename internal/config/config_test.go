@@ -47,7 +47,13 @@ func TestLoadConfigNoFile(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Expected error, got %v", err)
 	}
+}
 
+func TestLoadInvalidFile(t *testing.T) {
+	_, err := LoadConfig("invalid.yaml", log)
+	if err == nil {
+		t.Fatalf("Expected error, got %v", err)
+	}
 }
 
 func TestTargetDefinedTwiceValidation(t *testing.T) {
@@ -82,7 +88,7 @@ func TestTargetSelfDependentValidations(t *testing.T) {
 func TestTargetNotDefined(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", nil},
 		},
 		[]ExecutionPlan{{"foo", []string{"bar"}}, {"bar", []string{}}},
 	}
@@ -96,9 +102,12 @@ func TestTargetNotDefined(t *testing.T) {
 func TestDuplicatePlanName(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", nil},
 		},
-		[]ExecutionPlan{{"foo", []string{}}, {"foo", []string{}}},
+		[]ExecutionPlan{
+			{"foo", []string{"foo"}},
+			{"foo", []string{"foo"}},
+		},
 	}
 
 	err := validate(c, log)
@@ -110,21 +119,22 @@ func TestDuplicatePlanName(t *testing.T) {
 func TestDuplicateTargetInPlan(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", nil},
 		},
-		[]ExecutionPlan{{"foo", []string{"foo", "foo"}}},
+		[]ExecutionPlan{{"bar", []string{"foo", "foo"}}},
 	}
 
 	err := validate(c, log)
 	if err == nil {
 		t.Fatal("Expected an error but got none")
 	}
+
 }
 
 func TestGetTargetsForPlan(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", nil},
 		},
 		[]ExecutionPlan{{"foo", []string{"foo"}}},
 	}
@@ -152,7 +162,7 @@ func TestGetTargetsForPlanFailure(t *testing.T) {
 func TestGetTargetsForPlanFailure2(t *testing.T) {
 	c := &Config{
 		[]Target{
-			{"foo", nil, nil, "bar", &[]string{"foo"}},
+			{"foo", nil, nil, "bar", nil},
 		},
 		[]ExecutionPlan{{"foo", []string{}}},
 	}
