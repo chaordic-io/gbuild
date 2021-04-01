@@ -56,13 +56,14 @@ func scheduleTarget(target config.Target, retry int, wg *sync.WaitGroup, reads c
 		} else {
 			log.Printf("Target %v failed after %v, reason: \n%v\n\n", target.Name, elapsed, err)
 			writes <- TargetResult{&err, target, &waitTime, elapsed}
+			wg.Done()
 		}
 	} else {
 		log.Printf("Target %v finished successfully after %v\n", target.Name, elapsed)
 		writes <- TargetResult{nil, target, &waitTime, elapsed}
+		wg.Done()
 	}
 
-	wg.Done()
 }
 
 func runTarget(target config.Target, reads chan readOp) error {
@@ -98,9 +99,7 @@ func runTarget(target config.Target, reads chan readOp) error {
 			}
 		}
 	}()
-	err := cmd.Wait()
-
-	return err
+	return cmd.Wait()
 }
 
 func RunPlan(targets []config.Target, log common.Log) ([]TargetResult, error) {

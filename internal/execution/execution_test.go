@@ -45,6 +45,23 @@ func TestFailedExecutionWithCancelOfOthers(t *testing.T) {
 		t.Fatalf("Expected 2 results, got %v", res)
 	}
 }
+func TestFailedExecutionWithCancelOfOthersRetries(t *testing.T) {
+
+	targets := []config.Target{
+		{"fast", common.Int(2), nil, "asdfasdf", nil},
+		{"slow", nil, nil, "sleep 5", nil},
+	}
+
+	res, err := RunPlan(targets, log)
+
+	if err == nil {
+		t.Fatalf("Did not expect error %v", err)
+	}
+
+	if len(res) != 2 {
+		t.Fatalf("Expected 2 results, got %v", res)
+	}
+}
 
 func TestDependentExecution(t *testing.T) {
 	targets := []config.Target{
