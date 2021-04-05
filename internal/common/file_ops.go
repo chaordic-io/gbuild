@@ -136,8 +136,7 @@ func Gitignores(root string) ([]gitignoreFile, error) {
 				line := strings.TrimSpace(scanner.Text())
 				if len(line) > 0 && !strings.HasPrefix(line, "#") {
 					line = strings.TrimSpace(strings.Split(line, " #")[0])
-					patterns := append(patterns, gitignore.ParsePattern(line, nil))
-					fmt.Println(patterns)
+					patterns = append(patterns, gitignore.ParsePattern(line, nil))
 				}
 			}
 			ignore = append(ignore, gitignoreFile{path, gitignore.NewMatcher(patterns)})
