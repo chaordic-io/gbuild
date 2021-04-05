@@ -1,15 +1,20 @@
 package common
 
 import (
+	"bufio"
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
+
+	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
 )
 
 // A result is the product of reading and summing a file using MD5.
@@ -17,6 +22,11 @@ type result struct {
 	path string
 	sum  [md5.Size]byte
 	err  error
+}
+
+type gitignoreFile struct {
+	path    string
+	matcher gitignore.Matcher
 }
 
 func sumFiles(done <-chan struct{}, root string, shouldIgnoreFn func(string) bool) (<-chan result, <-chan error) {
@@ -97,4 +107,44 @@ func MD5Dir(root string, shouldIgnoreFn func(string) bool) (*string, error) {
 	dirHash := hex.EncodeToString(hash[:])
 
 	return &dirHash, nil
+}
+func Gitignores(root string) ([]gitignoreFile, error) {
+
+	var ignore []gitignoreFile
+
+	err := filepath.WalkDir(root, func(path string, info fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.Type().IsRegular() {
+			return nil
+		}
+
+		// could do this with goroutines and channels - make ignore into a channel
+		if info.Name() == ".gitignore" {
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			scanner := bufio.NewScanner(file)
+
+			var patterns []gitignore.Pattern
+
+			for scanner.Scan() {
+				line := strings.TrimSpace(scanner.Text())
+				if len(line) > 0 && !strings.HasPrefix(line, "#") {
+					line = strings.TrimSpace(strings.Split(line, " #")[0])
+					patterns := append(patterns, gitignore.ParsePattern(line, nil))
+					fmt.Println(patterns)
+				}
+			}
+			ignore = append(ignore, gitignoreFile{path, gitignore.NewMatcher(patterns)})
+		}
+
+		return nil
+	})
+
+	return ignore, err
 }
