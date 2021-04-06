@@ -1,4 +1,4 @@
-package common
+package internal
 
 import (
 	"bufio"
@@ -108,6 +108,7 @@ func MD5Dir(root string, shouldIgnoreFn func(string) bool) (*string, error) {
 
 	return &dirHash, nil
 }
+
 func Gitignores(root string) ([]gitignoreFile, error) {
 
 	var ignore []gitignoreFile
@@ -146,4 +147,19 @@ func Gitignores(root string) ([]gitignoreFile, error) {
 	})
 
 	return ignore, err
+}
+
+func IgnoreFn(projectRoot string) (func(string) bool, error) {
+
+	files, err := Gitignores(projectRoot)
+
+	if err != nil {
+		return nil, err
+	}
+	ignoreFn := func(file string) bool {
+		fmt.Println(files)
+		return true
+	}
+
+	return ignoreFn, nil
 }

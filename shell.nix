@@ -10,9 +10,6 @@ pkgs.mkShell {
   name="dev-environment";
   buildInputs = [
    pkgs.go
-   pkgs.oh-my-zsh
-   pkgs.vscode
-   pkgs.cloc
   ];
   shellHook = ''
     echo "Welcome to your dev env"

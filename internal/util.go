@@ -1,4 +1,4 @@
-package common
+package internal
 
 import "fmt"
 
@@ -28,4 +28,16 @@ func (log NoLog) Println(a ...interface{}) (n int, err error) {
 
 func (log NoLog) Printf(format string, a ...interface{}) (n int, err error) {
 	return 0, nil
+}
+
+func String(s string) *string {
+	return &s
+}
+
+func Int(s int) *int {
+	return &s
+}
+
+func Bool(s bool) *bool {
+	return &s
 }

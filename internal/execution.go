@@ -1,13 +1,10 @@
-package execution
+package internal
 
 import (
 	"os"
 	"os/exec"
 	"sync"
 	"time"
-
-	"github.com/chaordic-io/gbuild/internal/common"
-	"github.com/chaordic-io/gbuild/internal/config"
 )
 
 type readOp struct {
@@ -16,12 +13,12 @@ type readOp struct {
 
 type TargetResult struct {
 	Err     *error
-	Target  config.Target
+	Target  Target
 	Wait    *time.Duration
 	Elapsed time.Duration
 }
 
-func scheduleTarget(target config.Target, retry int, wg *sync.WaitGroup, reads chan readOp, writes chan TargetResult, log common.Log) {
+func scheduleTarget(target Target, retry int, wg *sync.WaitGroup, reads chan readOp, writes chan TargetResult, log Log) {
 	start := time.Now()
 
 	if target.DependsOn != nil && len(*target.DependsOn) > 0 {
@@ -66,7 +63,7 @@ func scheduleTarget(target config.Target, retry int, wg *sync.WaitGroup, reads c
 
 }
 
-func runTarget(target config.Target, reads chan readOp) error {
+func runTarget(target Target, reads chan readOp) error {
 	cmd := exec.Command("/bin/sh", "-c", target.Run)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -103,7 +100,7 @@ func runTarget(target config.Target, reads chan readOp) error {
 	return cmd.Wait()
 }
 
-func RunPlan(targets []config.Target, log common.Log) ([]TargetResult, error) {
+func RunPlan(targets []Target, log Log) ([]TargetResult, error) {
 	reads := make(chan readOp)
 	writes := make(chan TargetResult)
 	var waitGroup sync.WaitGroup

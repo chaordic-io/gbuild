@@ -5,9 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/chaordic-io/gbuild/internal/common"
-	"github.com/chaordic-io/gbuild/internal/config"
-	"github.com/chaordic-io/gbuild/internal/execution"
+	"github.com/chaordic-io/gbuild/internal"
 )
 
 var target string
@@ -20,20 +18,20 @@ func init() {
 
 func main() {
 	start := time.Now()
-	log := common.OSLog{}
+	log := internal.OSLog{}
 	flag.Parse()
 	log.Printf("Running target execution plan '%v' on file %v..\n\n", target, fileName)
-	conf, err := config.LoadConfig(fileName, log)
+	conf, err := internal.LoadConfig(fileName, log)
 	if err != nil {
 		log.Printf("Could not read config file %v, reason: %v exiting\n\n", fileName, err.Error())
 		os.Exit(1)
 	}
-	targets, err := config.GetTargetsForPlan(conf, target, log)
+	targets, err := internal.GetTargetsForPlan(conf, target, log)
 	if err != nil {
 		log.Printf("Could not get targets for %v, reason: %v exiting\n\n", target, err.Error())
 		os.Exit(1)
 	}
-	_, err = execution.RunPlan(targets, log)
+	_, err = internal.RunPlan(targets, log)
 	if err != nil {
 		log.Printf("Error executing plan, reason: %v\n\n", err.Error())
 		os.Exit(1)

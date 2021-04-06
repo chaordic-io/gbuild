@@ -1,12 +1,10 @@
-package config
+package internal
 
 import (
 	"testing"
-
-	"github.com/chaordic-io/gbuild/internal/common"
 )
 
-var log = common.NoLog{}
+var log = NoLog{}
 
 func TestLoadConfig(t *testing.T) {
 	c, err := LoadConfig("test.yml", log)

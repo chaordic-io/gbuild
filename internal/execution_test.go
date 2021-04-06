@@ -1,22 +1,19 @@
-package execution
+package internal
 
 import (
 	"testing"
-
-	"github.com/chaordic-io/gbuild/internal/common"
-	"github.com/chaordic-io/gbuild/internal/config"
 )
 
-var log = common.NoLog{}
+var l = NoLog{}
 
 func TestSimpleExecution(t *testing.T) {
 
-	targets := []config.Target{
+	targets := []Target{
 		{"foo", nil, nil, "cd .", nil},
 		{"bar", nil, nil, "cd .", nil},
 	}
 
-	res, err := RunPlan(targets, log)
+	res, err := RunPlan(targets, l)
 
 	if err != nil {
 		t.Fatalf("Did not expect error %v", err)
@@ -30,12 +27,12 @@ func TestSimpleExecution(t *testing.T) {
 // This test should pass in only a few seconds if it works, because a failed other process should cancell all others
 func TestFailedExecutionWithCancelOfOthers(t *testing.T) {
 
-	targets := []config.Target{
+	targets := []Target{
 		{"fast", nil, nil, "asdfasdf", nil},
 		{"slow", nil, nil, "sleep 5", nil},
 	}
 
-	res, err := RunPlan(targets, log)
+	res, err := RunPlan(targets, l)
 
 	if err == nil {
 		t.Fatalf("Did not expect error %v", err)
@@ -47,12 +44,12 @@ func TestFailedExecutionWithCancelOfOthers(t *testing.T) {
 }
 func TestFailedExecutionWithCancelOfOthersRetries(t *testing.T) {
 
-	targets := []config.Target{
-		{"fast", common.Int(2), nil, "asdfasdf", nil},
+	targets := []Target{
+		{"fast", Int(2), nil, "asdfasdf", nil},
 		{"slow", nil, nil, "sleep 5", nil},
 	}
 
-	res, err := RunPlan(targets, log)
+	res, err := RunPlan(targets, l)
 
 	if err == nil {
 		t.Fatalf("Did not expect error %v", err)
@@ -64,14 +61,14 @@ func TestFailedExecutionWithCancelOfOthersRetries(t *testing.T) {
 }
 
 func TestDependentExecution(t *testing.T) {
-	targets := []config.Target{
+	targets := []Target{
 		{"baz", nil, nil, "cd .", &[]string{"foo", "bar"}},
 		{"foo", nil, nil, "cd .", nil},
 		{"bar", nil, nil, "cd .", &[]string{"foo"}},
 	}
 	for i := 1; i < 100; i++ {
 
-		res, err := RunPlan(targets, log)
+		res, err := RunPlan(targets, l)
 
 		if err != nil {
 			t.Fatalf("Did not expect error %v", err)
@@ -95,11 +92,11 @@ func TestDependentExecution(t *testing.T) {
 }
 
 func TestNonExistentExecutionDir(t *testing.T) {
-	targets := []config.Target{
-		{"foo", nil, common.String("foobar"), "cd .", nil},
+	targets := []Target{
+		{"foo", nil, String("foobar"), "cd .", nil},
 	}
 
-	_, err := RunPlan(targets, log)
+	_, err := RunPlan(targets, l)
 
 	if err == nil {
 		t.Fatalf("Did not expect lack of error")
@@ -107,11 +104,11 @@ func TestNonExistentExecutionDir(t *testing.T) {
 }
 
 func TestExistingDir(t *testing.T) {
-	targets := []config.Target{
-		{"foo", nil, common.String("../execution"), "cd .", nil},
+	targets := []Target{
+		{"foo", nil, String("../internal"), "cd .", nil},
 	}
 
-	_, err := RunPlan(targets, log)
+	_, err := RunPlan(targets, l)
 
 	if err != nil {
 		t.Fatalf("Did not expect error %v", err)
