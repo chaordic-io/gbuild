@@ -37,7 +37,3 @@ func String(s string) *string {
 func Int(s int) *int {
 	return &s
 }
-
-func Bool(s bool) *bool {
-	return &s
-}

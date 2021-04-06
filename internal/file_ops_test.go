@@ -22,6 +22,20 @@ func TestCheckSumDir(t *testing.T) {
 	}
 }
 
+func TestCheckSumDirFail(t *testing.T) {
+	dotGit := ".git"
+	target := "target"
+	node := "node_modules"
+	check := func(str string) bool {
+		return strings.Contains(str, dotGit) || strings.Contains(str, target) || strings.Contains(str, node)
+	}
+
+	_, err := MD5Dir("asdfasdfs", check)
+	if err == nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+}
+
 func TestIgnoreGeneration(t *testing.T) {
 	fn, err := GenShouldIgnoreFn("../")
 	if err != nil {
