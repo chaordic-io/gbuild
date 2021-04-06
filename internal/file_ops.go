@@ -98,15 +98,17 @@ func MD5Dir(root string, shouldIgnoreFn func(string) bool) (*string, error) {
 	for path := range m {
 		paths = append(paths, path)
 	}
+	if len(paths) == 1 {
+		return String(fmt.Sprintf("%x", m[paths[0]])), nil
+	}
 	sort.Strings(paths)
 	toChecksum := ""
 	for _, path := range paths {
 		toChecksum = toChecksum + fmt.Sprintf("%x", m[path])
 	}
 	hash := md5.Sum([]byte(toChecksum))
-	dirHash := hex.EncodeToString(hash[:])
 
-	return &dirHash, nil
+	return String(hex.EncodeToString(hash[:])), nil
 }
 
 func Gitignores(root string) ([]gitignoreFile, error) {
@@ -150,7 +152,7 @@ func Gitignores(root string) ([]gitignoreFile, error) {
 	return ignore, err
 }
 
-func GenShouldIgnoreFn(projectRoot string) (func(string) bool, error) {
+func GenShouldIgnoreFn(projectRoot string, relativePath string) (func(string) bool, error) {
 
 	files, err := Gitignores(projectRoot)
 
@@ -158,8 +160,14 @@ func GenShouldIgnoreFn(projectRoot string) (func(string) bool, error) {
 		return nil, err
 	}
 	ignoreFn := func(file string) bool {
+		if relativePath != "" {
+			if strings.HasSuffix(relativePath, "/") {
+				file = relativePath + file
+			} else {
+				file = relativePath + "/" + file
+			}
+		}
 		for _, gitignore := range files {
-
 			if strings.HasPrefix(file, gitignore.path) && gitignore.matcher.Match(strings.Split(file, "/"), false) {
 				return true
 			}
@@ -168,4 +176,9 @@ func GenShouldIgnoreFn(projectRoot string) (func(string) bool, error) {
 	}
 
 	return ignoreFn, nil
+}
+
+func CheckSumWithGitIgnoreWithRelative(projectRoot string, relativePath string) (*string, error) {
+	// when testing this, output the files that are ignored to verify they are ignored correctly
+	return nil, nil
 }

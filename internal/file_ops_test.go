@@ -37,7 +37,7 @@ func TestCheckSumDirFail(t *testing.T) {
 }
 
 func TestIgnoreGeneration(t *testing.T) {
-	fn, err := GenShouldIgnoreFn("../")
+	fn, err := GenShouldIgnoreFn("../", "")
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}
@@ -51,6 +51,20 @@ func TestIgnoreGeneration(t *testing.T) {
 
 	if !fn("test/node_modules/foo") {
 		t.Fatal("Should be true for node_modules in root")
+	}
+}
+
+func TestRelativePath(t *testing.T) {
+	fn, err := GenShouldIgnoreFn("../", "test")
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+	if !fn(".vscode/settings.json") {
+		t.Fatal("Should be true for .vscode/settings.json")
+	}
+
+	if !fn("node_modules/bar") {
+		t.Fatal("Should be false for node_modules in root")
 	}
 
 }
