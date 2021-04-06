@@ -140,6 +140,7 @@ func Gitignores(root string) ([]gitignoreFile, error) {
 					patterns = append(patterns, gitignore.ParsePattern(line, nil))
 				}
 			}
+			path = strings.Replace(strings.ReplaceAll(path, "../", ""), ".gitignore", "", 1)
 			ignore = append(ignore, gitignoreFile{path, gitignore.NewMatcher(patterns)})
 		}
 
@@ -149,7 +150,7 @@ func Gitignores(root string) ([]gitignoreFile, error) {
 	return ignore, err
 }
 
-func IgnoreFn(projectRoot string) (func(string) bool, error) {
+func GenShouldIgnoreFn(projectRoot string) (func(string) bool, error) {
 
 	files, err := Gitignores(projectRoot)
 
@@ -157,8 +158,13 @@ func IgnoreFn(projectRoot string) (func(string) bool, error) {
 		return nil, err
 	}
 	ignoreFn := func(file string) bool {
-		fmt.Println(files)
-		return true
+		for _, gitignore := range files {
+
+			if strings.HasPrefix(file, gitignore.path) && gitignore.matcher.Match(strings.Split(file, "/"), false) {
+				return true
+			}
+		}
+		return false
 	}
 
 	return ignoreFn, nil

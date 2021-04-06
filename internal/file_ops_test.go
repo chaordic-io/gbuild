@@ -21,3 +21,22 @@ func TestCheckSumDir(t *testing.T) {
 		t.Fatalf("Expected length to be %d, but was ", len(*sum))
 	}
 }
+
+func TestIgnoreGeneration(t *testing.T) {
+	fn, err := GenShouldIgnoreFn("../")
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+	if !fn(".vscode/settings.json") {
+		t.Fatal("Should be true for .vscode/settings.json")
+	}
+
+	if fn("node_modules/foo") {
+		t.Fatal("Should be false for node_modules in root")
+	}
+
+	if !fn("test/node_modules/foo") {
+		t.Fatal("Should be true for node_modules in root")
+	}
+
+}
