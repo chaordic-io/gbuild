@@ -7,7 +7,7 @@ import (
 var log = NoLog{}
 
 func TestLoadConfig(t *testing.T) {
-	c, err := LoadConfig("test.yml", log)
+	c, err := LoadConfig("../test/test.yml", log)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -48,14 +48,14 @@ func TestLoadConfigNoFile(t *testing.T) {
 }
 
 func TestLoadInvalidFile(t *testing.T) {
-	_, err := LoadConfig("invalid.yaml", log)
+	_, err := LoadConfig("../test/invalid.yaml", log)
 	if err == nil {
 		t.Fatalf("Expected error, got %v", err)
 	}
 }
 
 func TestLoadFileThatFailsValidation(t *testing.T) {
-	_, err := LoadConfig("invalid2.yaml", log)
+	_, err := LoadConfig("../test/invalid2.yaml", log)
 	if err == nil {
 		t.Fatalf("Expected error, got %v", err)
 	}
