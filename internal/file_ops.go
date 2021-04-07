@@ -111,11 +111,14 @@ func MD5Dir(root string, shouldIgnoreFn func(string) bool) (*string, error) {
 	return String(hex.EncodeToString(hash[:])), nil
 }
 
-func Gitignores(root string) ([]gitignoreFile, error) {
+func Gitignores(root *string) ([]gitignoreFile, error) {
 
 	var ignore []gitignoreFile
+	if root == nil {
+		root = String(".")
+	}
 
-	err := filepath.WalkDir(root, func(path string, info fs.DirEntry, err error) error {
+	err := filepath.WalkDir(*root, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -152,7 +155,7 @@ func Gitignores(root string) ([]gitignoreFile, error) {
 	return ignore, err
 }
 
-func GenShouldIgnoreFn(projectRoot string, relativePath string) (func(string) bool, error) {
+func GenShouldIgnoreFn(projectRoot *string, relativePath *string) (func(string) bool, error) {
 
 	files, err := Gitignores(projectRoot)
 
@@ -160,13 +163,7 @@ func GenShouldIgnoreFn(projectRoot string, relativePath string) (func(string) bo
 		return nil, err
 	}
 	ignoreFn := func(file string) bool {
-		if relativePath != "" {
-			if strings.HasSuffix(relativePath, "/") {
-				file = relativePath + file
-			} else {
-				file = relativePath + "/" + file
-			}
-		}
+		file = prependPath(relativePath, file)
 		for _, gitignore := range files {
 			if strings.HasPrefix(file, gitignore.path) && gitignore.matcher.Match(strings.Split(file, "/"), false) {
 				return true
@@ -178,7 +175,41 @@ func GenShouldIgnoreFn(projectRoot string, relativePath string) (func(string) bo
 	return ignoreFn, nil
 }
 
-func CheckSumWithGitIgnoreWithRelative(projectRoot string, relativePath string) (*string, error) {
-	// when testing this, output the files that are ignored to verify they are ignored correctly
-	return nil, nil
+func prependPath(relativePath *string, file string) string {
+	if relativePath != nil {
+		if strings.HasSuffix(*relativePath, "/") {
+			return *relativePath + file
+		} else {
+			return *relativePath + "/" + file
+		}
+	} else {
+		return file
+	}
+}
+
+func CheckSumWithGitIgnoreWithRelative(projectRoot *string, relativePath *string, inputs []string) (*string, error) {
+	var calculatedInputs []string
+	for _, file := range inputs {
+		calculatedInputs = append(calculatedInputs, prependPath(projectRoot, prependPath(relativePath, file)))
+	}
+
+	fn, err := GenShouldIgnoreFn(projectRoot, relativePath)
+	if err != nil {
+		return nil, err
+	}
+
+	toChecksum := ""
+	if len(calculatedInputs) == 1 {
+		return MD5Dir(calculatedInputs[0], fn)
+	}
+	for _, input := range calculatedInputs {
+		sum, err := MD5Dir(input, fn)
+		if err != nil {
+			return nil, err
+		}
+		toChecksum = toChecksum + *sum
+	}
+	hash := md5.Sum([]byte(toChecksum))
+
+	return String(hex.EncodeToString(hash[:])), nil
 }

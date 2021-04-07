@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"strings"
 	"testing"
 )
@@ -37,7 +39,7 @@ func TestCheckSumDirFail(t *testing.T) {
 }
 
 func TestIgnoreGeneration(t *testing.T) {
-	fn, err := GenShouldIgnoreFn("../", "")
+	fn, err := GenShouldIgnoreFn(String("../"), nil)
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}
@@ -50,12 +52,12 @@ func TestIgnoreGeneration(t *testing.T) {
 	}
 
 	if !fn("test/node_modules/foo") {
-		t.Fatal("Should be true for node_modules in root")
+		t.Fatal("Should be true for node_modules in sub-folder")
 	}
 }
 
 func TestRelativePath(t *testing.T) {
-	fn, err := GenShouldIgnoreFn("../", "test")
+	fn, err := GenShouldIgnoreFn(String("../"), String("test"))
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}
@@ -66,5 +68,67 @@ func TestRelativePath(t *testing.T) {
 	if !fn("node_modules/bar") {
 		t.Fatal("Should be false for node_modules in root")
 	}
+}
 
+func TestSingleInput(t *testing.T) {
+	check := func(str string) bool {
+		return false
+	}
+	res2, err := MD5Dir(".", check)
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"internal"})
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+
+	if *res != *res2 {
+		t.Fatalf("Expected checksums to match, found %v and %v", *res, *res2)
+	}
+}
+
+func TestDoubleInput(t *testing.T) {
+	check := func(str string) bool {
+		return false
+	}
+	res2, err := MD5Dir(".", check)
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+	res3, err := MD5Dir("../cmd", check)
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+	hash := md5.Sum([]byte(*res2 + *res3))
+
+	md5Str := hex.EncodeToString(hash[:])
+
+	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"internal", "cmd"})
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+
+	if *res != md5Str {
+		t.Fatalf("Expected checksums to match, found %v and %v", *res, *res2)
+	}
+}
+
+func TestAccountingForGitIgnore(t *testing.T) {
+	check := func(str string) bool {
+		return false
+	}
+	res2, err := MD5Dir("../", check)
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+
+	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"."})
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+
+	if *res == *res2 {
+		t.Fatalf("Expected checksums to be different, found %v and %v", *res, *res2)
+	}
 }
