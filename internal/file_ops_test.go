@@ -132,3 +132,14 @@ func TestAccountingForGitIgnore(t *testing.T) {
 		t.Fatalf("Expected checksums to be different, found %v and %v", *res, *res2)
 	}
 }
+
+func TestGetGitHashes(t *testing.T) {
+	out, err := GetGitHashes(String("../"), nil, []string{"internal"})
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+
+	if len(*out) != 5 {
+		t.Fatalf("Expected a slice of 5 elements, found %v", *out)
+	}
+}

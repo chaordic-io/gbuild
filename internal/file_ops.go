@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -212,4 +213,27 @@ func CheckSumWithGitIgnoreWithRelative(projectRoot *string, relativePath *string
 	hash := md5.Sum([]byte(toChecksum))
 
 	return String(hex.EncodeToString(hash[:])), nil
+}
+
+func GetGitHashes(projectRoot *string, relativePath *string, inputs []string) (*[]string, error) {
+	var calculatedInputs []string
+	for _, file := range inputs {
+		calculatedInputs = append(calculatedInputs, prependPath(projectRoot, prependPath(relativePath, file)))
+	}
+	inputFiles := strings.Join(calculatedInputs, " ")
+	command := "git log -5 --pretty=format:\"%H\" -- " + inputFiles
+	out, err := exec.Command("/bin/sh", "-c", command).Output()
+	if err != nil {
+		return nil, err
+	}
+	scanner := bufio.NewScanner(strings.NewReader(string(out)))
+	var outputs []string
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if len(line) > 0 {
+			outputs = append(outputs, line)
+		}
+	}
+
+	return &outputs, nil
 }
