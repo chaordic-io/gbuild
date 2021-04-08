@@ -39,7 +39,7 @@ func TestCheckSumDirFail(t *testing.T) {
 }
 
 func TestIgnoreGeneration(t *testing.T) {
-	fn, err := GenShouldIgnoreFn(String("../"), nil)
+	fn, err := genShouldIgnoreFn(String("../"), nil)
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}
@@ -57,7 +57,7 @@ func TestIgnoreGeneration(t *testing.T) {
 }
 
 func TestRelativePath(t *testing.T) {
-	fn, err := GenShouldIgnoreFn(String("../"), String("test"))
+	fn, err := genShouldIgnoreFn(String("../"), String("test"))
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}

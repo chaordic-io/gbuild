@@ -7,12 +7,18 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type Cache struct {
+	Inputs  []string `yaml:"inputs"`
+	Outputs []string `yaml:"outputs"`
+}
+
 type Target struct {
 	Name       string    `yaml:"name"`
 	MaxRetries *int      `yaml:"max_retries"`
 	WorkDir    *string   `yaml:"work_dir"`
 	Run        string    `yaml:"run"`
 	DependsOn  *[]string `yaml:"depends_on"`
+	Caches     *[]Cache  `yaml:"caches"`
 }
 
 type ExecutionPlan struct {

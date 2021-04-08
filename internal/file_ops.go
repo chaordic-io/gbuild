@@ -111,7 +111,7 @@ func MD5Dir(root string, shouldIgnoreFn func(string) bool) (*string, error) {
 	return String(hex.EncodeToString(hash[:])), nil
 }
 
-func Gitignores(root *string) ([]gitignoreFile, error) {
+func gitignores(root *string) ([]gitignoreFile, error) {
 
 	var ignore []gitignoreFile
 	if root == nil {
@@ -155,9 +155,9 @@ func Gitignores(root *string) ([]gitignoreFile, error) {
 	return ignore, err
 }
 
-func GenShouldIgnoreFn(projectRoot *string, relativePath *string) (func(string) bool, error) {
+func genShouldIgnoreFn(projectRoot *string, relativePath *string) (func(string) bool, error) {
 
-	files, err := Gitignores(projectRoot)
+	files, err := gitignores(projectRoot)
 
 	if err != nil {
 		return nil, err
@@ -193,7 +193,7 @@ func CheckSumWithGitIgnoreWithRelative(projectRoot *string, relativePath *string
 		calculatedInputs = append(calculatedInputs, prependPath(projectRoot, prependPath(relativePath, file)))
 	}
 
-	fn, err := GenShouldIgnoreFn(projectRoot, relativePath)
+	fn, err := genShouldIgnoreFn(projectRoot, relativePath)
 	if err != nil {
 		return nil, err
 	}

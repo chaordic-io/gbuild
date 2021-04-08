@@ -9,8 +9,8 @@ var l = NoLog{}
 func TestSimpleExecution(t *testing.T) {
 
 	targets := []Target{
-		{"foo", nil, nil, "cd .", nil},
-		{"bar", nil, nil, "cd .", nil},
+		{"foo", nil, nil, "cd .", nil, nil},
+		{"bar", nil, nil, "cd .", nil, nil},
 	}
 
 	res, err := RunPlan(targets, l)
@@ -28,8 +28,8 @@ func TestSimpleExecution(t *testing.T) {
 func TestFailedExecutionWithCancelOfOthers(t *testing.T) {
 
 	targets := []Target{
-		{"fast", nil, nil, "asdfasdf", nil},
-		{"slow", nil, nil, "sleep 5", nil},
+		{"fast", nil, nil, "asdfasdf", nil, nil},
+		{"slow", nil, nil, "sleep 5", nil, nil},
 	}
 
 	res, err := RunPlan(targets, l)
@@ -45,8 +45,8 @@ func TestFailedExecutionWithCancelOfOthers(t *testing.T) {
 func TestFailedExecutionWithCancelOfOthersRetries(t *testing.T) {
 
 	targets := []Target{
-		{"fast", Int(2), nil, "asdfasdf", nil},
-		{"slow", nil, nil, "sleep 5", nil},
+		{"fast", Int(2), nil, "asdfasdf", nil, nil},
+		{"slow", nil, nil, "sleep 5", nil, nil},
 	}
 
 	res, err := RunPlan(targets, l)
@@ -62,9 +62,9 @@ func TestFailedExecutionWithCancelOfOthersRetries(t *testing.T) {
 
 func TestDependentExecution(t *testing.T) {
 	targets := []Target{
-		{"baz", nil, nil, "cd .", &[]string{"foo", "bar"}},
-		{"foo", nil, nil, "cd .", nil},
-		{"bar", nil, nil, "cd .", &[]string{"foo"}},
+		{"baz", nil, nil, "cd .", &[]string{"foo", "bar"}, nil},
+		{"foo", nil, nil, "cd .", nil, nil},
+		{"bar", nil, nil, "cd .", &[]string{"foo"}, nil},
 	}
 	for i := 1; i < 100; i++ {
 
@@ -93,7 +93,7 @@ func TestDependentExecution(t *testing.T) {
 
 func TestNonExistentExecutionDir(t *testing.T) {
 	targets := []Target{
-		{"foo", nil, String("foobar"), "cd .", nil},
+		{"foo", nil, String("foobar"), "cd .", nil, nil},
 	}
 
 	_, err := RunPlan(targets, l)
@@ -105,7 +105,7 @@ func TestNonExistentExecutionDir(t *testing.T) {
 
 func TestExistingDir(t *testing.T) {
 	targets := []Target{
-		{"foo", nil, String("../internal"), "cd .", nil},
+		{"foo", nil, String("../internal"), "cd .", nil, nil},
 	}
 
 	_, err := RunPlan(targets, l)
