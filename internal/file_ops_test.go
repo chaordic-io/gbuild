@@ -139,7 +139,7 @@ func TestGetGitHashes(t *testing.T) {
 		t.Fatalf("Expected no error, found %v", err)
 	}
 
-	if len(*out) != 5 {
-		t.Fatalf("Expected a slice of 5 elements, found %v", *out)
+	if out == nil || len(*out) == 0 {
+		t.Fatalf("Expected a slice of with elements, found %v", *out)
 	}
 }
