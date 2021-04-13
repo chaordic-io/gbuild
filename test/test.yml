@@ -16,6 +16,9 @@ targets:
     - Bar
     - Foo
   run: echo "buh bye"
+  caches:
+    - inputs: [a, b, c]
+      outputs: [a, b, c]
 execution_plans:
   - name: CI
     targets:
