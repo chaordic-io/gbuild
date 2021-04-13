@@ -39,7 +39,7 @@ func TestCheckSumDirFail(t *testing.T) {
 }
 
 func TestIgnoreGeneration(t *testing.T) {
-	fn, err := genShouldIgnoreFn(String("../"), nil)
+	fn, err := genShouldIgnoreFn(String("../"), nil, true)
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}
@@ -57,7 +57,7 @@ func TestIgnoreGeneration(t *testing.T) {
 }
 
 func TestRelativePath(t *testing.T) {
-	fn, err := genShouldIgnoreFn(String("../"), String("test"))
+	fn, err := genShouldIgnoreFn(String("../"), String("test"), true)
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}
@@ -78,7 +78,7 @@ func TestSingleInput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}
-	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"internal"})
+	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"internal"}, true)
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}
@@ -104,7 +104,7 @@ func TestDoubleInput(t *testing.T) {
 
 	md5Str := hex.EncodeToString(hash[:])
 
-	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"internal", "cmd"})
+	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"internal", "cmd"}, true)
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}
@@ -123,13 +123,17 @@ func TestAccountingForGitIgnore(t *testing.T) {
 		t.Fatalf("Expected no error, found %v", err)
 	}
 
-	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"."})
+	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"."}, true)
+	res3, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"."}, false)
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
 	}
 
 	if *res == *res2 {
 		t.Fatalf("Expected checksums to be different, found %v and %v", *res, *res2)
+	}
+	if *res == *res3 {
+		t.Fatalf("Expected checksums to be different, found %v and %v", *res, *res3)
 	}
 }
 

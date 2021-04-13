@@ -156,8 +156,17 @@ func gitignores(root *string) ([]gitignoreFile, error) {
 	return ignore, err
 }
 
-func genShouldIgnoreFn(projectRoot *string, relativePath *string) (func(string) bool, error) {
+func genShouldIgnoreFn(projectRoot *string, relativePath *string, useGitIgnore bool) (func(string) bool, error) {
 
+	if !useGitIgnore {
+		return func(file string) bool {
+			file = prependPath(relativePath, file)
+			if strings.HasPrefix(file, ".git/") {
+				return true
+			}
+			return false
+		}, nil
+	}
 	files, err := gitignores(projectRoot)
 
 	if err != nil {
@@ -165,6 +174,9 @@ func genShouldIgnoreFn(projectRoot *string, relativePath *string) (func(string) 
 	}
 	ignoreFn := func(file string) bool {
 		file = prependPath(relativePath, file)
+		if strings.HasPrefix(file, ".git/") {
+			return true
+		}
 		for _, gitignore := range files {
 			if strings.HasPrefix(file, gitignore.path) && gitignore.matcher.Match(strings.Split(file, "/"), false) {
 				return true
@@ -188,13 +200,13 @@ func prependPath(relativePath *string, file string) string {
 	}
 }
 
-func CheckSumWithGitIgnoreWithRelative(projectRoot *string, relativePath *string, inputs []string) (*string, error) {
+func CheckSumWithGitIgnoreWithRelative(projectRoot *string, relativePath *string, inputs []string, useGitIgnore bool) (*string, error) {
 	var calculatedInputs []string
 	for _, file := range inputs {
 		calculatedInputs = append(calculatedInputs, prependPath(projectRoot, prependPath(relativePath, file)))
 	}
 
-	fn, err := genShouldIgnoreFn(projectRoot, relativePath)
+	fn, err := genShouldIgnoreFn(projectRoot, relativePath, useGitIgnore)
 	if err != nil {
 		return nil, err
 	}
