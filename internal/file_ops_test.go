@@ -124,6 +124,9 @@ func TestAccountingForGitIgnore(t *testing.T) {
 	}
 
 	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"."}, true)
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
 	res3, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"."}, false)
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
