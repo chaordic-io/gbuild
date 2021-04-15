@@ -51,10 +51,6 @@ type CacheProvider interface {
 // .gbuild_cache/index/hash
 // .gbuild_cache/index/githash
 
-func (index *CacheIndex) getCacheFile(state *CacheState) *string {
-	return nil
-}
-
 func calculateCacheState(rootDir *string, target *Target) (*[]CacheState, error) {
 	if target.Caches != nil && len(*target.Caches) > 0 {
 		var caches []CacheState
@@ -96,6 +92,10 @@ func calculateCacheStates(rootDir *string, targets *[]Target) (*[]CacheState, er
 	}
 
 	return nil, nil
+}
+
+func (index *CacheIndex) getCacheFile(state *CacheState) *string {
+	return nil
 }
 
 func LoadCache(rootDir *string, targets *[]Target, provider CacheProvider) error {
