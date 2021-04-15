@@ -81,7 +81,5 @@ execution_plans:
 ```
 
 ### TODO
-* Caching of outputs and avoid re-running unchanged targets
-* Honour/piggyback on .gitignore for files to ignore (use this? https://github.com/sabhiram/go-gitignore)
 * Plugins for cache-storage (local/remote)
 * Plugins for language specific cache-management

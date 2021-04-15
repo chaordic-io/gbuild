@@ -161,7 +161,7 @@ func genShouldIgnoreFn(projectRoot *string, relativePath *string, useGitIgnore b
 	if !useGitIgnore {
 		return func(file string) bool {
 			file = prependPath(relativePath, file)
-			if strings.HasPrefix(file, ".git/") {
+			if strings.HasPrefix(file, ".git"+string(os.PathSeparator)) {
 				return true
 			}
 			return false
@@ -174,11 +174,11 @@ func genShouldIgnoreFn(projectRoot *string, relativePath *string, useGitIgnore b
 	}
 	ignoreFn := func(file string) bool {
 		file = prependPath(relativePath, file)
-		if strings.HasPrefix(file, ".git/") {
+		if strings.HasPrefix(file, ".git"+string(os.PathSeparator)) {
 			return true
 		}
 		for _, gitignore := range files {
-			if strings.HasPrefix(file, gitignore.path) && gitignore.matcher.Match(strings.Split(file, "/"), false) {
+			if strings.HasPrefix(file, gitignore.path) && gitignore.matcher.Match(strings.Split(file, string(os.PathSeparator)), false) {
 				return true
 			}
 		}
@@ -190,12 +190,16 @@ func genShouldIgnoreFn(projectRoot *string, relativePath *string, useGitIgnore b
 
 func prependPath(relativePath *string, file string) string {
 	if relativePath != nil {
-		if strings.HasSuffix(*relativePath, "/") {
-			return *relativePath + file
+		if strings.HasSuffix(*relativePath, string(os.PathSeparator)) {
+			return filepath.Join(*relativePath, file)
 		} else {
-			return *relativePath + "/" + file
+			return filepath.Join(*relativePath, file)
 		}
 	} else {
+		if strings.HasPrefix(file, "~") || strings.HasPrefix(file, "$HOME") {
+			homedir, _ := os.UserHomeDir()
+			return filepath.Join(homedir, strings.Replace(strings.Replace(file, "~", "", 1), "$HOME", "", 1))
+		}
 		return file
 	}
 }

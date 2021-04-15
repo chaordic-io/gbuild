@@ -150,3 +150,31 @@ func TestGetGitHashes(t *testing.T) {
 		t.Fatalf("Expected a slice of with elements, found %v", *out)
 	}
 }
+
+func TestHomeDirTilde(t *testing.T) {
+	str := prependPath(nil, "~/.config")
+
+	if strings.HasPrefix(str, "~") {
+		t.Fatalf("Expected no ~, found %v", str)
+	}
+
+	hasUserPrefix := strings.HasPrefix(str, "/home") || strings.HasPrefix(str, "/Users") || strings.HasPrefix(str, "/root/")
+
+	if !hasUserPrefix {
+		t.Fatalf("Expected no ~, found %v", str)
+	}
+}
+
+func TestHomeDirEnvVar(t *testing.T) {
+	str := prependPath(nil, "$HOME/.config")
+
+	if strings.HasPrefix(str, "~") {
+		t.Fatalf("Expected no ~, found %v", str)
+	}
+
+	hasUserPrefix := strings.HasPrefix(str, "/home") || strings.HasPrefix(str, "/Users") || strings.HasPrefix(str, "/root/")
+
+	if !hasUserPrefix {
+		t.Fatalf("Expected no ~, found %v", str)
+	}
+}
