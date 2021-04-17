@@ -23,10 +23,9 @@ func main() {
 	log := internal.OSLog{}
 	flag.Parse()
 	if version {
-		internal.PrintVersion()
+		internal.PrintVersionInfo()
 		os.Exit(0)
 	}
-
 	log.Printf("Running target execution plan '%v' on file %v..\n\n", target, fileName)
 	conf, err := internal.LoadConfig(fileName, log)
 	if err != nil {
