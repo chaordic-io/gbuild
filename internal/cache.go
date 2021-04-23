@@ -114,7 +114,8 @@ func LoadCache(rootDir *string, targets *[]Target, provider CacheProvider) error
 	for _, state := range *states {
 		cache := index.getCacheFile(&state)
 		if cache != nil && *cache != *state.OutChecksum {
-			// check if we already downloaded the cache here?
+			// check if we already downloaded the cache here? -
+			// "has built locally with list" to avoid unpacking same cache multiple times
 			hitDir := filepath.Join(cacheDir, *cache)
 			if _, err := os.Stat(hitDir); os.IsNotExist(err) {
 				os.MkdirAll(hitDir, os.ModePerm)

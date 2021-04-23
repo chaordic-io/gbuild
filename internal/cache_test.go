@@ -9,7 +9,7 @@ func cacheToTarget(caches *[]Cache) Target {
 }
 func TestCalculateCacheStatesWithOne(t *testing.T) {
 	cache := cacheToTarget(&[]Cache{
-		Cache{[]string{"config.go", "execution.go"}, []string{"config_test.go", "execution_test.go"}},
+		{[]string{"config.go", "execution.go"}, []string{"config_test.go", "execution_test.go"}},
 	})
 
 	state, err := calculateCacheStates(String("../"), &[]Target{cache})
