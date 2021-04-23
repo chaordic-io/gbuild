@@ -10,16 +10,22 @@ import (
 
 var target string
 var fileName string
+var version bool
 
 func init() {
 	flag.StringVar(&target, "t", "build", "Define target execution plan")
 	flag.StringVar(&fileName, "f", ".gbuild.yaml", "File to run")
+	flag.BoolVar(&version, "v", false, "Print the installed gbuild version")
 }
 
 func main() {
 	start := time.Now()
 	log := internal.OSLog{}
 	flag.Parse()
+	if version {
+		internal.PrintVersionInfo()
+		os.Exit(0)
+	}
 	log.Printf("Running target execution plan '%v' on file %v..\n\n", target, fileName)
 	conf, err := internal.LoadConfig(fileName, log)
 	if err != nil {
