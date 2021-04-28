@@ -146,7 +146,7 @@ func gitignores(root *string) ([]gitignoreFile, error) {
 					patterns = append(patterns, gitignore.ParsePattern(line, nil))
 				}
 			}
-			path = strings.Replace(strings.ReplaceAll(path, "../", ""), ".gitignore", "", 1)
+			path = strings.Replace(strings.Replace(path, *root, "", 1), ".gitignore", "", 1)
 			ignore = append(ignore, gitignoreFile{path, gitignore.NewMatcher(patterns)})
 		}
 
@@ -158,13 +158,11 @@ func gitignores(root *string) ([]gitignoreFile, error) {
 
 func genShouldIgnoreFn(projectRoot *string, relativePath *string, useGitIgnore bool) (func(string) bool, error) {
 
+	gitPath := prependPath(projectRoot, ".git"+string(os.PathSeparator))
 	if !useGitIgnore {
 		return func(file string) bool {
 			file = prependPath(relativePath, file)
-			if strings.HasPrefix(file, ".git"+string(os.PathSeparator)) {
-				return true
-			}
-			return false
+			return strings.HasPrefix(file, gitPath)
 		}, nil
 	}
 	files, err := gitignores(projectRoot)
@@ -174,11 +172,13 @@ func genShouldIgnoreFn(projectRoot *string, relativePath *string, useGitIgnore b
 	}
 	ignoreFn := func(file string) bool {
 		file = prependPath(relativePath, file)
-		if strings.HasPrefix(file, ".git"+string(os.PathSeparator)) {
+
+		if strings.HasPrefix(file, gitPath) {
 			return true
 		}
 		for _, gitignore := range files {
-			if strings.HasPrefix(file, gitignore.path) && gitignore.matcher.Match(strings.Split(file, string(os.PathSeparator)), false) {
+			fname := strings.Replace(file, *projectRoot, "", 1)
+			if strings.HasPrefix(fname, gitignore.path) && gitignore.matcher.Match(strings.Split(fname, string(os.PathSeparator)), false) {
 				return true
 			}
 		}
