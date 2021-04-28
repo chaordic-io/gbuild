@@ -229,66 +229,52 @@ func unzip(dest string, src string) ([]string, error) {
 	return filenames, nil
 }
 
-func zipWriter(src string, target string) error {
-
-	// Get a Buffer to Write To
+func zipWriter(sources map[string]string, target string) error {
 	outFile, err := os.Create(target)
 	if err != nil {
-		fmt.Println(err)
-	}
-	defer outFile.Close()
-
-	// Create a new zip archive.
-	w := zip.NewWriter(outFile)
-
-	// Add some files to the archive.
-	err = addFiles(w, src, "")
-
-	if err != nil {
-		fmt.Println(err)
 		return err
 	}
-	// Make sure to check the error on Close.
+	defer outFile.Close()
+	w := zip.NewWriter(outFile)
+
+	for k, v := range sources {
+		err = addFiles(w, k, v)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = w.Close()
 	return err
 }
 
 func addFiles(w *zip.Writer, basePath, baseInZip string) error {
-	// Open the Directory
 	files, err := ioutil.ReadDir(basePath)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
 	for _, file := range files {
-		// fmt.Println(basePath + file.Name())
 		if !file.IsDir() {
 			dat, err := ioutil.ReadFile(filepath.Join(basePath, file.Name()))
 			if err != nil {
-				fmt.Println("ff " + err.Error())
 				return err
 			}
-
-			// Add some files to the archive.
-			f, err := w.Create(baseInZip + file.Name())
+			f, err := w.Create(filepath.Join(baseInZip, file.Name()))
 			if err != nil {
-				fmt.Println(err)
 				return err
 			}
 			_, err = f.Write(dat)
 			if err != nil {
-				fmt.Println(err)
 				return err
 			}
 		} else if file.IsDir() {
+			newBase := filepath.Join(basePath, file.Name())
 
-			// Recurse
-			newBase := basePath + file.Name() + "/"
-			// fmt.Println("Recursing and Adding SubDir: " + file.Name())
-			// fmt.Println("Recursing and Adding SubDir: " + newBase)
-
-			addFiles(w, newBase, baseInZip+file.Name()+"/")
+			err = addFiles(w, newBase, filepath.Join(baseInZip, file.Name()))
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

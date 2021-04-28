@@ -32,7 +32,7 @@ func TestZipUnzip(t *testing.T) {
 
 	os.MkdirAll("../tmp", os.ModePerm)
 	os.MkdirAll("../tmp/unzip", os.ModePerm)
-	err = zipWriter("../", "../tmp/file.zip")
+	err = zipWriter(map[string]string{"../": ""}, "../tmp/file.zip")
 	if err != nil {
 		t.Fatalf("Did not expect error %v", err)
 	}
