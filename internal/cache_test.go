@@ -32,7 +32,7 @@ func TestZipUnzip(t *testing.T) {
 
 	os.MkdirAll("../tmp", os.ModePerm)
 	os.MkdirAll("../tmp/unzip", os.ModePerm)
-	err = zipWriter(map[string]string{"../": ""}, "../tmp/file.zip")
+	err = zipWriter("../tmp/file.zip", map[string]string{"../": ""})
 	if err != nil {
 		t.Fatalf("Did not expect error %v", err)
 	}
@@ -49,3 +49,5 @@ func TestZipUnzip(t *testing.T) {
 	}
 
 }
+
+// test ability to put mix of folders and files back in the right place

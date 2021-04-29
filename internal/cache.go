@@ -2,6 +2,7 @@ package internal
 
 import (
 	"archive/zip"
+	"bufio"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -28,8 +29,8 @@ type CacheIndex struct {
 type CacheProvider interface {
 	GetIndex() (*CacheIndex, error)
 	PutIndex(CacheIndex) error
-	GetCache(string) (*io.ReadCloser, error)
-	PutCache(string, io.ReadCloser) error
+	GetCache(string) (*io.Reader, error)
+	PutCache(string, io.Reader) error
 }
 
 type LocalFileCacheProvider struct {
@@ -44,11 +45,11 @@ func (cache *LocalFileCacheProvider) PutIndex(index CacheIndex) error {
 	return nil
 }
 
-func (cache *LocalFileCacheProvider) GetCache(hash string) (*io.ReadCloser, error) {
+func (cache *LocalFileCacheProvider) GetCache(hash string) (*io.Reader, error) {
 	return nil, nil
 }
 
-func (cache *LocalFileCacheProvider) PutCache(hash string, reader io.ReadCloser) error {
+func (cache *LocalFileCacheProvider) PutCache(hash string, reader io.Reader) error {
 	return nil
 }
 
@@ -134,7 +135,7 @@ func LoadCache(rootDir *string, targets *[]Target, provider CacheProvider) error
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		os.MkdirAll(cacheDir, os.ModePerm)
 	}
-	states, err := calculateCacheStates(nil, targets)
+	states, err := calculateCacheStates(rootDir, targets)
 	if err != nil || states == nil {
 		return err
 	}
@@ -154,7 +155,7 @@ func LoadCache(rootDir *string, targets *[]Target, provider CacheProvider) error
 				if err != nil {
 					return err
 				}
-				// unzip reader in cache-hit-dir
+				// unzip reader in cache hitDir
 				// move files into target locations of state
 			}
 		}
@@ -163,14 +164,50 @@ func LoadCache(rootDir *string, targets *[]Target, provider CacheProvider) error
 	return nil
 }
 
-func PutCache(rootDir *string, targets *[]Target) error {
+func PutCache(rootDir *string, targets *[]Target, provider CacheProvider) error {
+	if targets != nil {
+		states, err := calculateCacheStates(rootDir, targets)
+		if err != nil || states == nil {
+			return err
+		}
+		index, err := provider.GetIndex()
+		if err != nil {
+			return err
+		}
+		for _, state := range *states {
+			if index.getCacheFile(&state) == nil && state.OutChecksum != nil {
+				targetFile := prependPath(rootDir, *state.OutChecksum)
+				err = zipTarget(targetFile, state.Cache.Outputs)
+				if err != nil {
+					return err
+				}
+				file, err := os.Open(targetFile)
+				if err != nil {
+					return err
+				}
+				reader := bufio.NewReader(file)
+				err = provider.PutCache(targetFile, reader)
+				if err != nil {
+					return err
+				}
+
+				// add entries to index file
+				// file hash, and git hash, if committed changes
+			}
+		}
+
+		// put new index
+	}
 
 	return nil
 }
 
-func zipTarget(toLocation string, target *Target) error {
-
-	return nil
+func zipTarget(targetFile string, outputs []string) error {
+	mappings := map[string]string{}
+	for _, v := range outputs {
+		mappings[v] = v
+	}
+	return zipWriter(targetFile, mappings)
 }
 
 func unzip(dest string, src string) ([]string, error) {
@@ -229,13 +266,14 @@ func unzip(dest string, src string) ([]string, error) {
 	return filenames, nil
 }
 
-func zipWriter(sources map[string]string, target string) error {
+func zipWriter(target string, sources map[string]string) error {
 	outFile, err := os.Create(target)
 	if err != nil {
 		return err
 	}
 	defer outFile.Close()
 	w := zip.NewWriter(outFile)
+	defer w.Close()
 
 	for k, v := range sources {
 		err = addFiles(w, k, v)
@@ -244,7 +282,6 @@ func zipWriter(sources map[string]string, target string) error {
 		}
 	}
 
-	err = w.Close()
 	return err
 }
 
