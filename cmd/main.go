@@ -50,7 +50,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = internal.PutCache(nil, &targets)
+	err = internal.PutCache(nil, &targets, nil)
 	if err != nil {
 		log.Printf("Failed to put cache, reason: %v\n\n", err.Error())
 		os.Exit(1)
