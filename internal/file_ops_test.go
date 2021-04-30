@@ -3,6 +3,7 @@ package internal
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -176,5 +177,30 @@ func TestHomeDirEnvVar(t *testing.T) {
 
 	if !hasUserPrefix {
 		t.Fatalf("Expected no ~, found %v", str)
+	}
+}
+
+func TestHasGitChanges(t *testing.T) {
+	res, err := HasGitChanges(String("../"))
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+	fmt.Println(res)
+
+}
+
+func TestGetGitHash(t *testing.T) {
+	res, err := GetGitHash(String("../"))
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+
+	if strings.Contains(*res, "\"") {
+		t.Fatalf("should not contain quotes, found %v", res)
+	}
+
+	_, err = GetGitHash(String("../../"))
+	if err == nil {
+		t.Fatalf("Expected error, found %v", err)
 	}
 }

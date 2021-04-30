@@ -253,3 +253,25 @@ func GetGitHashes(projectRoot *string, relativePath *string, inputs []string) (*
 
 	return &outputs, nil
 }
+
+func HasGitChanges(projectRoot *string) (bool, error) {
+	res, err := execGitCmd(projectRoot, "git status -s | wc -l")
+	return res != nil && *res != "0", err
+}
+
+func GetGitHash(projectRoot *string) (*string, error) {
+	return execGitCmd(projectRoot, "git log -1 --pretty=format:\"%H\"")
+}
+
+func execGitCmd(projectRoot *string, cmd string) (*string, error) {
+	command := exec.Command("/bin/sh", "-c", cmd)
+	if projectRoot != nil {
+		command.Dir = *projectRoot
+	}
+	out, err := command.Output()
+	if err != nil {
+		return nil, err
+	}
+	s := strings.TrimSpace(string(out))
+	return &s, nil
+}
