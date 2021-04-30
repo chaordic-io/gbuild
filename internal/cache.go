@@ -171,6 +171,7 @@ func PutCache(rootDir *string, targets *[]Target, provider CacheProvider) error 
 			return err
 		}
 		index, err := provider.GetIndex()
+		indexSize := len(index.GitHashes) + len(index.Hashes)
 		if err != nil {
 			return err
 		}
@@ -190,13 +191,26 @@ func PutCache(rootDir *string, targets *[]Target, provider CacheProvider) error 
 				if err != nil {
 					return err
 				}
-
-				// add entries to index file
-				// file hash, and git hash, if committed changes
+				hasChanges, err := HasGitChanges(rootDir)
+				if err != nil {
+					return err
+				}
+				if !hasChanges {
+					gitHash, err := GetGitHash(rootDir)
+					if err != nil {
+						return err
+					}
+					fmt.Println("Add a git hash entry here")
+					index.GitHashes[*gitHash] = *state.OutChecksum
+				}
+				index.Hashes[state.InChecksum] = *state.OutChecksum
 			}
 		}
-
-		// put new index
+		newIndexSize := len(index.GitHashes) + len(index.Hashes)
+		if newIndexSize > indexSize {
+			err = provider.PutIndex(*index)
+		}
+		return err
 	}
 
 	return nil
