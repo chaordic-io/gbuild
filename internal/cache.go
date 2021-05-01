@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/chaordic-io/gbuild/pkg/api"
 )
 
 type CacheState struct {
@@ -18,39 +20,6 @@ type CacheState struct {
 	InChecksum  string
 	GitRevs     []string
 	OutChecksum *string
-}
-
-type CacheIndex struct {
-	Hashes    map[string]string
-	GitHashes map[string]string
-}
-
-// Probably change this interface
-type CacheProvider interface {
-	GetIndex() (*CacheIndex, error)
-	PutIndex(CacheIndex) error
-	GetCache(string) (*io.Reader, error)
-	PutCache(string, io.Reader) error
-}
-
-type LocalFileCacheProvider struct {
-	Directory string
-}
-
-func (cache *LocalFileCacheProvider) GetIndex() (*CacheIndex, error) {
-	return nil, nil
-}
-
-func (cache *LocalFileCacheProvider) PutIndex(index CacheIndex) error {
-	return nil
-}
-
-func (cache *LocalFileCacheProvider) GetCache(hash string) (*io.Reader, error) {
-	return nil, nil
-}
-
-func (cache *LocalFileCacheProvider) PutCache(hash string, reader io.Reader) error {
-	return nil
 }
 
 // func (state *CacheState) inputs() CacheLocation {
@@ -65,7 +34,7 @@ func (cache *LocalFileCacheProvider) PutCache(hash string, reader io.Reader) err
 // Calculate current out - DONE
 // run in against index
 // retrieve first priority that matches
-// on way out write to index, put cache items
+// on way out write to index, put cache items DONE
 // .gbuild_cache/index/hash
 // .gbuild_cache/index/githash
 
@@ -112,12 +81,12 @@ func calculateCacheStates(rootDir *string, targets *[]Target) (*[]CacheState, er
 	return nil, nil
 }
 
-func (index *CacheIndex) getCacheFile(state *CacheState) *string {
-	result := index.Hashes[state.InChecksum]
-	if len(result) == 0 {
+func getCacheFile(index *api.CacheIndex, state *CacheState) *string {
+	result, hasKey := index.Hashes[state.InChecksum]
+	if !hasKey {
 		for _, hash := range state.GitRevs {
-			result = index.GitHashes[hash]
-			if len(result) > 0 {
+			result, hasKey = index.GitHashes[hash]
+			if !hasKey {
 				return &result
 			}
 		}
@@ -127,13 +96,15 @@ func (index *CacheIndex) getCacheFile(state *CacheState) *string {
 	}
 }
 
-func LoadCache(rootDir *string, targets *[]Target, provider CacheProvider) error {
+func LoadCache(rootDir *string, targets *[]Target, provider api.CacheProvider) error {
 	if provider == nil || targets == nil {
 		return nil
 	}
 	cacheDir := prependPath(rootDir, filepath.Join(".gbuild_cache", "cache"))
+	zipDir := prependPath(rootDir, filepath.Join(".gbuild_cache", "compressed"))
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		os.MkdirAll(cacheDir, os.ModePerm)
+		os.MkdirAll(zipDir, os.ModePerm)
 	}
 	states, err := calculateCacheStates(rootDir, targets)
 	if err != nil || states == nil {
@@ -144,18 +115,42 @@ func LoadCache(rootDir *string, targets *[]Target, provider CacheProvider) error
 		return err
 	}
 	for _, state := range *states {
-		cache := index.getCacheFile(&state)
+		cache := getCacheFile(index, &state)
 		if cache != nil && *cache != *state.OutChecksum {
 			// check if we already downloaded the cache here? -
 			// "has built locally with list" to avoid unpacking same cache multiple times
 			hitDir := filepath.Join(cacheDir, *cache)
 			if _, err := os.Stat(hitDir); os.IsNotExist(err) {
 				os.MkdirAll(hitDir, os.ModePerm)
-				_, err := provider.GetCache(*cache)
+				reader, err := provider.GetCache(*cache)
 				if err != nil {
 					return err
 				}
-				// unzip reader in cache hitDir
+				target := prependPath(&zipDir, *cache)
+				fo, err := os.Create(target)
+				if err != nil {
+					return err
+				}
+				w := bufio.NewWriter(fo)
+				buf := make([]byte, 1024)
+				r := bufio.NewReader(*reader)
+				for {
+					n, err := r.Read(buf)
+					if err != nil && err != io.EOF {
+						return err
+					}
+					if n == 0 {
+						break
+					}
+					if _, err := w.Write(buf[:n]); err != nil {
+						panic(err)
+					}
+				}
+				if err = w.Flush(); err != nil {
+					return err
+				}
+				targetDir := prependPath(&cacheDir, *cache)
+				unzip(target, targetDir)
 				// move files into target locations of state
 			}
 		}
@@ -164,7 +159,7 @@ func LoadCache(rootDir *string, targets *[]Target, provider CacheProvider) error
 	return nil
 }
 
-func PutCache(rootDir *string, targets *[]Target, provider CacheProvider) error {
+func PutCache(rootDir *string, targets *[]Target, provider api.CacheProvider) error {
 	if targets != nil {
 		states, err := calculateCacheStates(rootDir, targets)
 		if err != nil || states == nil {
@@ -176,7 +171,7 @@ func PutCache(rootDir *string, targets *[]Target, provider CacheProvider) error 
 			return err
 		}
 		for _, state := range *states {
-			if index.getCacheFile(&state) == nil && state.OutChecksum != nil {
+			if getCacheFile(index, &state) == nil && state.OutChecksum != nil {
 				targetFile := prependPath(rootDir, *state.OutChecksum)
 				err = zipTarget(targetFile, state.Cache.Outputs)
 				if err != nil {
