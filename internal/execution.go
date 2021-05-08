@@ -129,6 +129,9 @@ func RunPlan(targets []Target, log Log) ([]TargetResult, error) {
 	reads <- read
 	resp := <-read.resp
 	var err error
+	close(reads)
+	close(writes)
+	close(read)
 
 	for _, t := range resp {
 		if t.Err != nil {
