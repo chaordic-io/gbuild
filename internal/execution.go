@@ -18,16 +18,16 @@ type TargetResult struct {
 	Elapsed time.Duration
 }
 
-func scheduleTarget(target Target, retry int, wg *sync.WaitGroup, reads chan readOp, writes chan TargetResult, log Log) {
+func scheduleTarget(target Target, retry int, reads chan readOp, writes chan TargetResult, log Log) {
 	start := time.Now()
 
 	if target.DependsOn != nil && len(*target.DependsOn) > 0 {
 		completed := false
-
+		read := readOp{
+			resp: make(chan []TargetResult),
+		}
+		defer close(read.resp)
 		for !completed {
-			read := readOp{
-				resp: make(chan []TargetResult),
-			}
 			reads <- read
 			resp := <-read.resp
 			matches := 0
@@ -49,16 +49,14 @@ func scheduleTarget(target Target, retry int, wg *sync.WaitGroup, reads chan rea
 	if err != nil {
 		if target.MaxRetries != nil && *target.MaxRetries > retry {
 			log.Printf("Target %v failed, retrying\n", target.Name)
-			scheduleTarget(target, retry+1, wg, reads, writes, log)
+			scheduleTarget(target, retry+1, reads, writes, log)
 		} else {
 			log.Printf("Target %v failed after %v, reason: \n%v\n\n", target.Name, elapsed, err)
 			writes <- TargetResult{&err, target, &waitTime, elapsed}
-			wg.Done()
 		}
 	} else {
 		log.Printf("Target %v finished successfully after %v\n", target.Name, elapsed)
 		writes <- TargetResult{nil, target, &waitTime, elapsed}
-		wg.Done()
 	}
 
 }
@@ -77,11 +75,20 @@ func runTarget(target Target, reads chan readOp) error {
 
 	go func() {
 		cancelled := false
+		read := readOp{
+			resp: make(chan []TargetResult),
+		}
 
-		for !cancelled {
-			read := readOp{
-				resp: make(chan []TargetResult),
+		// on failure, the for-loop below may try to msg reads, which has already been closed
+		// this guards for this and closes the channel cleanly
+		defer func() {
+			if r := recover(); r != nil {
+				close(read.resp)
+			} else {
+				close(read.resp)
 			}
+		}()
+		for !cancelled {
 			reads <- read
 			resp := <-read.resp
 			for _, t := range resp {
@@ -103,29 +110,37 @@ func runTarget(target Target, reads chan readOp) error {
 func RunPlan(targets []Target, log Log) ([]TargetResult, error) {
 	reads := make(chan readOp)
 	writes := make(chan TargetResult)
+
+	defer close(reads)
+	defer close(writes)
 	var waitGroup sync.WaitGroup
 	// Set number of effective goroutines we want to wait upon
 	waitGroup.Add(len(targets))
 
 	go func() {
 		var state = []TargetResult{}
-		for {
+		for len(state) < (len(targets) + 1) {
 			select {
 			case read := <-reads:
 				read.resp <- state
 			case write := <-writes:
+				if len(state) < len(targets) {
+					waitGroup.Done()
+				}
 				state = append(state, write)
 			}
 		}
 	}()
 
 	for _, target := range targets {
-		go scheduleTarget(target, 1, &waitGroup, reads, writes, log)
+		go scheduleTarget(target, 1, reads, writes, log)
 	}
 	waitGroup.Wait()
+
 	read := readOp{
 		resp: make(chan []TargetResult),
 	}
+	defer close(read.resp)
 	reads <- read
 	resp := <-read.resp
 	var err error

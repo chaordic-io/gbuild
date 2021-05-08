@@ -42,6 +42,7 @@ func TestFailedExecutionWithCancelOfOthers(t *testing.T) {
 		t.Fatalf("Expected 2 results, got %v", res)
 	}
 }
+
 func TestFailedExecutionWithCancelOfOthersRetries(t *testing.T) {
 
 	targets := []Target{
