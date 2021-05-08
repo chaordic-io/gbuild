@@ -81,11 +81,11 @@ func runTarget(target Target, reads chan readOp) error {
 
 		// on failure, the for-loop below may try to msg reads, which has already been closed
 		// this guards for this and closes the channel cleanly
+		// this can be cleaned up by writing and retrying in runTarget instead
 		defer func() {
+			close(read.resp)
 			if r := recover(); r != nil {
-				close(read.resp)
-			} else {
-				close(read.resp)
+				cmd.Process.Kill()
 			}
 		}()
 		for !cancelled {
@@ -119,11 +119,13 @@ func RunPlan(targets []Target, log Log) ([]TargetResult, error) {
 
 	go func() {
 		var state = []TargetResult{}
+		// we wait for the last read to get results, so +1
 		for len(state) < (len(targets) + 1) {
 			select {
 			case read := <-reads:
 				read.resp <- state
 			case write := <-writes:
+				// waitGroup only until this condition
 				if len(state) < len(targets) {
 					waitGroup.Done()
 				}
