@@ -129,9 +129,7 @@ func RunPlan(targets []Target, log Log) ([]TargetResult, error) {
 	reads <- read
 	resp := <-read.resp
 	var err error
-	close(reads)
-	close(writes)
-	close(read.resp)
+	// TODO close channels cleanly
 
 	for _, t := range resp {
 		if t.Err != nil {
