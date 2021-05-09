@@ -83,7 +83,9 @@ func runTarget(target Target, waitGroup *sync.WaitGroup, retry int, reads chan r
 					break
 				}
 			}
-			time.Sleep(5 * time.Millisecond)
+			if !cancelled {
+				time.Sleep(5 * time.Millisecond)
+			}
 		}
 	}()
 	err := cmd.Wait()
