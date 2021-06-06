@@ -15,3 +15,6 @@
 # vendor/
 .vscode/
 yarn.lock # Ignore yarn.lock to prevent conflicts between repository resolution (internal/external)
+.gbuild_cache/
+.DS_Store
+tmp/

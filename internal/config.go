@@ -21,6 +21,7 @@ type Target struct {
 	Caches     *[]Cache  `yaml:"caches"`
 }
 
+// Add cache provider to this
 type ExecutionPlan struct {
 	Name    string   `yaml:"name"`
 	Targets []string `yaml:"targets"`

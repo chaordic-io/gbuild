@@ -37,12 +37,24 @@ func main() {
 		log.Printf("Could not get targets for %v, reason: %v exiting\n\n", target, err.Error())
 		os.Exit(1)
 	}
+
+	err = internal.LoadCache(nil, &targets, nil)
+	if err != nil {
+		log.Printf("Failed to get cache, reason: %v\n\n", err.Error())
+		os.Exit(1)
+	}
+
 	_, err = internal.RunPlan(targets, log)
 	if err != nil {
 		log.Printf("Error executing plan, reason: %v\n\n", err.Error())
 		os.Exit(1)
 	}
+
+	err = internal.PutCache(nil, &targets, nil)
+	if err != nil {
+		log.Printf("Failed to put cache, reason: %v\n\n", err.Error())
+		os.Exit(1)
+	}
 	elapsed := time.Since(start)
 	log.Printf("Build completed successfully after %v\n\n", elapsed)
-
 }

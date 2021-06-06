@@ -3,6 +3,7 @@ package internal
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -124,6 +125,9 @@ func TestAccountingForGitIgnore(t *testing.T) {
 	}
 
 	res, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"."}, true)
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
 	res3, err := CheckSumWithGitIgnoreWithRelative(String("../"), nil, []string{"."}, false)
 	if err != nil {
 		t.Fatalf("Expected no error, found %v", err)
@@ -145,5 +149,58 @@ func TestGetGitHashes(t *testing.T) {
 
 	if out == nil || len(*out) == 0 {
 		t.Fatalf("Expected a slice of with elements, found %v", *out)
+	}
+}
+
+func TestHomeDirTilde(t *testing.T) {
+	str := prependPath(nil, "~/.config")
+
+	if strings.HasPrefix(str, "~") {
+		t.Fatalf("Expected no ~, found %v", str)
+	}
+
+	hasUserPrefix := strings.HasPrefix(str, "/home") || strings.HasPrefix(str, "/Users") || strings.HasPrefix(str, "/root/")
+
+	if !hasUserPrefix {
+		t.Fatalf("Expected no ~, found %v", str)
+	}
+}
+
+func TestHomeDirEnvVar(t *testing.T) {
+	str := prependPath(nil, "$HOME/.config")
+
+	if strings.HasPrefix(str, "~") {
+		t.Fatalf("Expected no ~, found %v", str)
+	}
+
+	hasUserPrefix := strings.HasPrefix(str, "/home") || strings.HasPrefix(str, "/Users") || strings.HasPrefix(str, "/root/")
+
+	if !hasUserPrefix {
+		t.Fatalf("Expected no ~, found %v", str)
+	}
+}
+
+func TestHasGitChanges(t *testing.T) {
+	res, err := HasGitChanges(String("../"))
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+	fmt.Println(res)
+
+}
+
+func TestGetGitHash(t *testing.T) {
+	res, err := GetGitHash(String("../"))
+	if err != nil {
+		t.Fatalf("Expected no error, found %v", err)
+	}
+
+	if strings.Contains(*res, "\"") {
+		t.Fatalf("should not contain quotes, found %v", res)
+	}
+
+	_, err = GetGitHash(String("../../"))
+	if err == nil {
+		t.Fatalf("Expected error, found %v", err)
 	}
 }

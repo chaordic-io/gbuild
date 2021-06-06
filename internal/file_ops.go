@@ -146,7 +146,7 @@ func gitignores(root *string) ([]gitignoreFile, error) {
 					patterns = append(patterns, gitignore.ParsePattern(line, nil))
 				}
 			}
-			path = strings.Replace(strings.ReplaceAll(path, "../", ""), ".gitignore", "", 1)
+			path = strings.Replace(strings.Replace(path, *root, "", 1), ".gitignore", "", 1)
 			ignore = append(ignore, gitignoreFile{path, gitignore.NewMatcher(patterns)})
 		}
 
@@ -158,13 +158,11 @@ func gitignores(root *string) ([]gitignoreFile, error) {
 
 func genShouldIgnoreFn(projectRoot *string, relativePath *string, useGitIgnore bool) (func(string) bool, error) {
 
+	gitPath := prependPath(projectRoot, ".git"+string(os.PathSeparator))
 	if !useGitIgnore {
 		return func(file string) bool {
 			file = prependPath(relativePath, file)
-			if strings.HasPrefix(file, ".git/") {
-				return true
-			}
-			return false
+			return strings.HasPrefix(file, gitPath)
 		}, nil
 	}
 	files, err := gitignores(projectRoot)
@@ -174,11 +172,13 @@ func genShouldIgnoreFn(projectRoot *string, relativePath *string, useGitIgnore b
 	}
 	ignoreFn := func(file string) bool {
 		file = prependPath(relativePath, file)
-		if strings.HasPrefix(file, ".git/") {
+
+		if strings.HasPrefix(file, gitPath) {
 			return true
 		}
 		for _, gitignore := range files {
-			if strings.HasPrefix(file, gitignore.path) && gitignore.matcher.Match(strings.Split(file, "/"), false) {
+			fname := strings.Replace(file, *projectRoot, "", 1)
+			if strings.HasPrefix(fname, gitignore.path) && gitignore.matcher.Match(strings.Split(fname, string(os.PathSeparator)), false) {
 				return true
 			}
 		}
@@ -190,12 +190,16 @@ func genShouldIgnoreFn(projectRoot *string, relativePath *string, useGitIgnore b
 
 func prependPath(relativePath *string, file string) string {
 	if relativePath != nil {
-		if strings.HasSuffix(*relativePath, "/") {
-			return *relativePath + file
+		if strings.HasSuffix(*relativePath, string(os.PathSeparator)) {
+			return filepath.Join(*relativePath, file)
 		} else {
-			return *relativePath + "/" + file
+			return filepath.Join(*relativePath, file)
 		}
 	} else {
+		if strings.HasPrefix(file, "~") || strings.HasPrefix(file, "$HOME") {
+			homedir, _ := os.UserHomeDir()
+			return filepath.Join(homedir, strings.Replace(strings.Replace(file, "~", "", 1), "$HOME", "", 1))
+		}
 		return file
 	}
 }
@@ -248,4 +252,26 @@ func GetGitHashes(projectRoot *string, relativePath *string, inputs []string) (*
 	}
 
 	return &outputs, nil
+}
+
+func HasGitChanges(projectRoot *string) (bool, error) {
+	res, err := execGitCmd(projectRoot, "git status -s | wc -l")
+	return res != nil && *res != "0", err
+}
+
+func GetGitHash(projectRoot *string) (*string, error) {
+	return execGitCmd(projectRoot, "git log -1 --pretty=format:\"%H\"")
+}
+
+func execGitCmd(projectRoot *string, cmd string) (*string, error) {
+	command := exec.Command("/bin/sh", "-c", cmd)
+	if projectRoot != nil {
+		command.Dir = *projectRoot
+	}
+	out, err := command.Output()
+	if err != nil {
+		return nil, err
+	}
+	s := strings.TrimSpace(string(out))
+	return &s, nil
 }

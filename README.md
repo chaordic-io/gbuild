@@ -85,4 +85,4 @@ execution_plans:
 
 ### TODO
 * Caching of outputs and avoid re-running unchanged targets
-* Plugins for language specific cache-management
+* Plugins for cache-storage (local/remote)
