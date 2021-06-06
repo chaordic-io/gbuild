@@ -1,6 +1,6 @@
 <!-- ![example workflow](https://github.com/chaordic-io/gbuild/actions/workflows/build.yml/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/chaordic-io/gbuild/badge.svg?branch=main)](https://coveralls.io/github/chaordic-io/gbuild?branch=main) [![Go Report Card](https://goreportcard.com/badge/github.com/chaordic-io/gbuild)](https://goreportcard.com/report/github.com/chaordic-io/gbuild) -->
 ## NO ACTIVE DEVELOPMENT TAKING PLACE AT THE MOMENT
-This project was an early experiment in trying to achieve some of the goals stated below. Most of them were achieved. There are some useful learnings and code here, which we will likely reuse in a future project or revive this one, but for now, the project is on indefinite ice.
+This project Is an early experiment in trying to achieve some of the goals stated below. Most of them were achieved. There are some useful learnings and code here, which we will likely reuse in a future project or revive this one, but for now, the project is on indefinite ice.
 
 # gbuild
 `gbuild` stands for `graph build`. Gbuild is a meta build-tool for multi language, module & deployment-target projects, that allows you to find the most effective way to build in parallel using existing language-specific tools, while honouring the implicit dependency graph betweeen modules. Currently parallel execution works, and in the future, we plan to add build caching through a plugin system.
